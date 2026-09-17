@@ -1,0 +1,38 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: grocery_pos_backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - pos_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - DB_PATH=/app/data/grocery_pos.sqlite
+    networks:
+      - pos_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: grocery_pos_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - pos_network
+
+volumes:
+  pos_data:
+    driver: local
+
+networks:
+  pos_network:
+    driver: bridge
