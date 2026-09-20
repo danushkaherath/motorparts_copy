@@ -8,7 +8,7 @@ interface LockScreenModalProps {
 }
 
 export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, currentUser, onUnlock }) => {
-  const [username, setUsername] = useState<string>(currentUser?.username || 'cashier1');
+  const [username, setUsername] = useState<string>(currentUser?.username || '');
   const [pin, setPin] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,14 +21,17 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
     if (isLocked) {
       setPin('');
       setError(null);
-      if (currentUser?.username && currentUser?.role !== 'admin') {
+      if (currentUser?.username) {
         setUsername(currentUser.username);
+        setTimeout(() => {
+          pinInputRef.current?.focus();
+        }, 50);
       } else {
-        setUsername('cashier1');
+        setUsername('');
+        setTimeout(() => {
+          usernameInputRef.current?.focus();
+        }, 50);
       }
-      setTimeout(() => {
-        pinInputRef.current?.focus();
-      }, 50);
     }
   }, [isLocked, currentUser]);
 
@@ -64,7 +67,7 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
       }
       onUnlock(data.user);
     } catch (err: any) {
-      setError(err.message || 'Incorrect credentials. Default: cashier1 / 0000 or admin / 1234');
+      setError(err.message || 'Incorrect username or password/PIN');
       setPin('');
       pinInputRef.current?.focus();
     } finally {
@@ -91,7 +94,7 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
           <Lock className="w-7 h-7" />
         </div>
 
-        <h2 className="text-xl font-black text-white tracking-tight">Register Access & Sign In</h2>
+        <h2 className="text-xl font-bold text-white tracking-tight">Register Access & Sign In</h2>
         <p className="text-xs text-slate-400 mt-1 mb-5 text-center">
           Enter your username and password or PIN to sign in.
         </p>
@@ -116,7 +119,7 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Type username (e.g. cashier1, admin)"
+                placeholder="Enter username"
                 className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl py-2.5 pl-10 pr-3 text-xs font-medium outline-hidden transition placeholder:text-slate-500"
               />
               <User className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
@@ -145,7 +148,7 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
                 required
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
-                placeholder="Type password or PIN (e.g. 0000, 1234)"
+                placeholder="Enter password or PIN"
                 className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl py-2.5 pl-10 pr-10 text-xs font-mono tracking-wider outline-hidden transition placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-500"
               />
               <Key className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
@@ -199,12 +202,6 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
             <span>{loading ? 'Authenticating...' : 'Sign In & Unlock (↵)'}</span>
           </button>
         </form>
-
-        <div className="mt-4 pt-3 border-t border-slate-800/80 w-full text-center">
-          <p className="text-[10px] text-slate-500 font-mono">
-            Default: <strong>cashier1</strong> (0000) • <strong>admin</strong> (1234)
-          </p>
-        </div>
       </div>
     </div>
   );
