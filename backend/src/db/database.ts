@@ -183,6 +183,11 @@ export async function initDatabase(): Promise<void> {
       shift_id TEXT,
       cashier_id TEXT,
       cashier_name TEXT,
+      customer_id TEXT,
+      customer_name TEXT,
+      customer_phone TEXT,
+      points_earned REAL DEFAULT 0,
+      points_redeemed REAL DEFAULT 0,
       payment_method TEXT NOT NULL, -- 'CASH' or 'CARD'
       subtotal REAL NOT NULL,
       discount_amount REAL DEFAULT 0,
@@ -325,7 +330,6 @@ export async function initDatabase(): Promise<void> {
   // Performance indexes for orders and related tables
   await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_shift_id ON orders(shift_id)');
   await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)');
-  await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id)');
   await dbRun('CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)');
   await dbRun('CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier_id ON purchase_orders(supplier_id)');
   await dbRun('CREATE INDEX IF NOT EXISTS idx_po_items_po_id ON purchase_order_items(po_id)');
@@ -442,6 +446,10 @@ export async function initDatabase(): Promise<void> {
   } catch {}
   try {
     await dbRun('ALTER TABLE orders ADD COLUMN points_redeemed REAL DEFAULT 0');
+  } catch {}
+
+  try {
+    await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id)');
   } catch {}
 
   // Seed default settings if empty
