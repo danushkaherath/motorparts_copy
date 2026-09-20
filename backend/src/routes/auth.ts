@@ -195,7 +195,7 @@ authRouter.put('/users/:id', async (req: Request, res: Response): Promise<void> 
     }
     // Main admin safety: ensure usr_admin / admin always retains admin role, staff and settings
     let enforcedRole = newRole;
-    if (user.id === 'usr_admin' || user.username === 'admin' || user.username === 'owner') {
+    if (user.id === 'usr_admin' || user.username === 'admin') {
       enforcedRole = 'admin';
       if (!finalPerms.includes('staff')) finalPerms.push('staff');
       if (!finalPerms.includes('settings')) finalPerms.push('settings');

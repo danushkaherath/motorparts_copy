@@ -106,13 +106,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const hasModuleAccess = (mod: string) => {
     if (!currentUser) return false;
+    // If user has customized permissions array, strictly honor it
+    if (Array.isArray(currentUser.permissions) && currentUser.permissions.length > 0) {
+      return currentUser.permissions.includes(mod);
+    }
+    // Fallbacks if permissions array is not set or empty
     if (currentUser.role === 'admin') return true;
     if (currentUser.role === 'supervisor') {
-      if (Array.isArray(currentUser.permissions) && currentUser.permissions.includes(mod)) return true;
       return ['pos', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'].includes(mod);
-    }
-    if (Array.isArray(currentUser.permissions)) {
-      return currentUser.permissions.includes(mod);
     }
     return mod === 'pos';
   };

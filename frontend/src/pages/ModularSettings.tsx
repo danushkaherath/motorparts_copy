@@ -175,7 +175,11 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
     }
   };
 
-  if (currentUser?.role !== 'admin') {
+  const hasSettingsAccess = Array.isArray(currentUser?.permissions)
+    ? currentUser.permissions.includes('settings')
+    : currentUser?.role === 'admin';
+
+  if (!hasSettingsAccess) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-[calc(100vh-53px)] bg-slate-950 p-6 select-none">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center space-y-4 animate-in fade-in zoom-in-95">
