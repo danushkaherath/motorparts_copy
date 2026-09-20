@@ -159,76 +159,6 @@ export async function initDatabase(): Promise<void> {
   await dbRun('CREATE INDEX IF NOT EXISTS idx_products_is_in_inventory ON products(is_in_inventory)');
 
   await dbRun(`
-    CREATE TABLE IF NOT EXISTS product_batches (
-      id TEXT PRIMARY KEY,
-      product_id TEXT NOT NULL,
-      batch_number TEXT NOT NULL,
-      cost_price REAL NOT NULL,
-      selling_price REAL NOT NULL,
-      mrp REAL NOT NULL,
-      stock_quantity REAL DEFAULT 0,
-      expiry_date TEXT,
-      shelf_location TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (product_id) REFERENCES products(id),
-      UNIQUE(product_id, batch_number)
-    )
-  `);
-  await dbRun('CREATE INDEX IF NOT EXISTS idx_batches_product_id ON product_batches(product_id)');
-  await dbRun('CREATE INDEX IF NOT EXISTS idx_batches_batch_num ON product_batches(batch_number)');
-
-  // Deduplicate any existing duplicate batches before creating unique index
-  try {
-    const duplicates = await dbAll<any>(`
-      SELECT product_id, batch_number, COUNT(*) as cnt 
-      FROM product_batches 
-      GROUP BY product_id, batch_number 
-      HAVING cnt > 1
-    `);
-
-    for (const dup of duplicates) {
-      const rows = await dbAll<any>(
-        `SELECT * FROM product_batches WHERE product_id = ? AND batch_number = ? ORDER BY created_at ASC`,
-        [dup.product_id, dup.batch_number]
-      );
-      if (rows.length > 1) {
-        const primary = rows[0];
-        const others = rows.slice(1);
-        const totalStock = rows.reduce((sum: number, r: any) => sum + Number(r.stock_quantity || 0), 0);
-        const latestExp = rows.map((r: any) => r.expiry_date).filter(Boolean).pop() || null;
-        const latestShelf = rows.map((r: any) => r.shelf_location).filter(Boolean).pop() || null;
-
-        await dbRun(
-          `UPDATE product_batches SET 
-            stock_quantity = ?, 
-            expiry_date = COALESCE(?, expiry_date),
-            shelf_location = COALESCE(?, shelf_location),
-            updated_at = CURRENT_TIMESTAMP 
-           WHERE id = ?`,
-          [totalStock, latestExp, latestShelf, primary.id]
-        );
-
-        for (const other of others) {
-          await dbRun(`DELETE FROM product_batches WHERE id = ?`, [other.id]);
-        }
-      }
-    }
-
-    await dbRun('CREATE UNIQUE INDEX IF NOT EXISTS idx_batches_product_batch ON product_batches(product_id, batch_number)');
-  } catch (err: any) {
-    console.warn('Batch unique index migration notice:', err.message);
-  }
-
-  // Performance indexes for orders and related tables
-  await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_shift_id ON orders(shift_id)');
-  await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)');
-  await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id)');
-  await dbRun('CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)');
-  await dbRun('CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier_id ON purchase_orders(supplier_id)');
-  await dbRun('CREATE INDEX IF NOT EXISTS idx_po_items_po_id ON purchase_order_items(po_id)');
-
-  await dbRun(`
     CREATE TABLE IF NOT EXISTS shifts (
       id TEXT PRIMARY KEY,
       cashier_id TEXT NOT NULL,
@@ -330,6 +260,76 @@ export async function initDatabase(): Promise<void> {
   `);
 
   // Goods Received Notes (GRN / Goods Inward)
+  await dbRun(`
+    CREATE TABLE IF NOT EXISTS product_batches (
+      id TEXT PRIMARY KEY,
+      product_id TEXT NOT NULL,
+      batch_number TEXT NOT NULL,
+      cost_price REAL NOT NULL,
+      selling_price REAL NOT NULL,
+      mrp REAL NOT NULL,
+      stock_quantity REAL DEFAULT 0,
+      expiry_date TEXT,
+      shelf_location TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (product_id) REFERENCES products(id),
+      UNIQUE(product_id, batch_number)
+    )
+  `);
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_batches_product_id ON product_batches(product_id)');
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_batches_batch_num ON product_batches(batch_number)');
+
+  // Deduplicate any existing duplicate batches before creating unique index
+  try {
+    const duplicates = await dbAll<any>(`
+      SELECT product_id, batch_number, COUNT(*) as cnt 
+      FROM product_batches 
+      GROUP BY product_id, batch_number 
+      HAVING cnt > 1
+    `);
+
+    for (const dup of duplicates) {
+      const rows = await dbAll<any>(
+        `SELECT * FROM product_batches WHERE product_id = ? AND batch_number = ? ORDER BY created_at ASC`,
+        [dup.product_id, dup.batch_number]
+      );
+      if (rows.length > 1) {
+        const primary = rows[0];
+        const others = rows.slice(1);
+        const totalStock = rows.reduce((sum: number, r: any) => sum + Number(r.stock_quantity || 0), 0);
+        const latestExp = rows.map((r: any) => r.expiry_date).filter(Boolean).pop() || null;
+        const latestShelf = rows.map((r: any) => r.shelf_location).filter(Boolean).pop() || null;
+
+        await dbRun(
+          `UPDATE product_batches SET 
+            stock_quantity = ?, 
+            expiry_date = COALESCE(?, expiry_date),
+            shelf_location = COALESCE(?, shelf_location),
+            updated_at = CURRENT_TIMESTAMP 
+           WHERE id = ?`,
+          [totalStock, latestExp, latestShelf, primary.id]
+        );
+
+        for (const other of others) {
+          await dbRun(`DELETE FROM product_batches WHERE id = ?`, [other.id]);
+        }
+      }
+    }
+
+    await dbRun('CREATE UNIQUE INDEX IF NOT EXISTS idx_batches_product_batch ON product_batches(product_id, batch_number)');
+  } catch (err: any) {
+    console.warn('Batch unique index migration notice:', err.message);
+  }
+
+  // Performance indexes for orders and related tables
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_shift_id ON orders(shift_id)');
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)');
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id)');
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)');
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier_id ON purchase_orders(supplier_id)');
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_po_items_po_id ON purchase_order_items(po_id)');
+
   await dbRun(`
     CREATE TABLE IF NOT EXISTS goods_received_notes (
       id TEXT PRIMARY KEY,
