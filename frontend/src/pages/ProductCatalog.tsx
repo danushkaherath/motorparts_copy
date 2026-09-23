@@ -11,13 +11,15 @@ import {
   PackageCheck,
   Building2,
   X,
-  Layers
+  Layers,
+  Barcode
 } from 'lucide-react';
 import type { Product, AppSettings } from '../types';
 import { api } from '../services/api';
 import { BulkUploadModal } from '../components/BulkUploadModal';
 import { WipeCatalogModal } from '../components/WipeCatalogModal';
 import { ProductBatchesModal } from '../components/ProductBatchesModal';
+import { BarcodeLabelModal } from '../components/BarcodeLabelModal';
 
 interface ProductCatalogProps {
   settings: AppSettings | null;
@@ -45,6 +47,10 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState<boolean>(false);
   const [batchModalProduct, setBatchModalProduct] = useState<Product | null>(null);
+
+  // Barcode Labels Modal
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState<boolean>(false);
+  const [barcodeProducts, setBarcodeProducts] = useState<Product[]>([]);
 
   // Stocking Modal
   const [stockingProduct, setStockingProduct] = useState<Product | null>(null);
@@ -423,6 +429,16 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
                             <PackagePlus className="w-3.5 h-3.5" />
                             <span>{isStocked ? 'Stock' : 'Add to Stock'}</span>
                           </button>
+                          <button
+                            onClick={() => {
+                              setBarcodeProducts([p]);
+                              setIsBarcodeModalOpen(true);
+                            }}
+                            title="Print Barcode Stickers (Xprinter XP-365B)"
+                            className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                          >
+                            <Barcode className="w-3.5 h-3.5" />
+                          </button>
                           {canManage && (
                             <button
                               onClick={() => handleOpenEdit(p)}
@@ -755,6 +771,19 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
           onBatchesUpdated={() => {
             loadData();
           }}
+        />
+      )}
+
+      {/* Barcode & Label Sticker Designer/Printer Modal */}
+      {isBarcodeModalOpen && barcodeProducts.length > 0 && (
+        <BarcodeLabelModal
+          isOpen={isBarcodeModalOpen}
+          onClose={() => {
+            setIsBarcodeModalOpen(false);
+            setBarcodeProducts([]);
+          }}
+          products={barcodeProducts}
+          settings={settings}
         />
       )}
     </div>

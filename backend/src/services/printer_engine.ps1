@@ -214,6 +214,92 @@ if ($Action -eq "test") {
     exit 0
 }
 
+# ACTION: PRINT LABELS (Xprinter XP-365B Barcode Stickers)
+if ($Action -eq "labels") {
+    if (-not (Test-Path $ReceiptJsonPath)) {
+        throw "Label JSON file not found at: $ReceiptJsonPath"
+    }
+
+    $jsonContent = [System.IO.File]::ReadAllText($ReceiptJsonPath, [System.Text.Encoding]::UTF8)
+    $data = $jsonContent | ConvertFrom-Json
+    $printer = Resolve-TargetPrinter $PrinterName
+    $copies = if ($data.copies) { [int]$data.copies } else { 1 }
+    $labelWidthMm = if ($data.label_width_mm) { [double]$data.label_width_mm } else { 50 }
+    $labelHeightMm = if ($data.label_height_mm) { [double]$data.label_height_mm } else { 30 }
+
+    if ($data.image_base64) {
+        $base64Data = $data.image_base64
+        if ($base64Data -match "base64,(.*)") {
+            $base64Data = $matches[1]
+        }
+        $bytes = [Convert]::FromBase64String($base64Data)
+        $tempImgPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), ("label_img_" + [System.Guid]::NewGuid().ToString() + ".png"))
+        [System.IO.File]::WriteAllBytes($tempImgPath, $bytes)
+
+        if (Test-Path $tempImgPath) {
+            $img = [System.Drawing.Image]::FromFile($tempImgPath)
+            
+            $doc = New-Object System.Drawing.Printing.PrintDocument
+            $doc.PrinterSettings.PrinterName = $printer
+            $prodName = if ($data.products -and $data.products.Count -gt 0) { $data.products[0].name } else { "Sticker" }
+            $doc.DocumentName = "POS Label - " + $prodName
+            $doc.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0, 0, 0, 0)
+            $doc.OriginAtMargins = $false
+            if ($copies -gt 1) {
+                $doc.PrinterSettings.Copies = [short]$copies
+            }
+
+            # Map width & height to hundredths of an inch (100 DPI standard .NET PaperSize)
+            $wHundredths = [int]($labelWidthMm / 25.4 * 100)
+            $hHundredths = [int]($labelHeightMm / 25.4 * 100)
+
+            # Match existing stock size on printer or set custom
+            $matchedSize = $null
+            foreach ($ps in $doc.PrinterSettings.PaperSizes) {
+                if ([Math]::Abs($ps.Width - $wHundredths) -le 15 -and [Math]::Abs($ps.Height - $hHundredths) -le 15) {
+                    $matchedSize = $ps
+                    break
+                }
+            }
+            if ($matchedSize) {
+                $doc.DefaultPageSettings.PaperSize = $matchedSize
+            } else {
+                try {
+                    $customSize = New-Object System.Drawing.Printing.PaperSize("Custom Label", $wHundredths, $hHundredths)
+                    $doc.DefaultPageSettings.PaperSize = $customSize
+                } catch {
+                    # Driver may use default stock
+                }
+            }
+
+            $script:_labelImg = $img
+            $doc.add_PrintPage({
+                param($sender, $e)
+                $bounds = $e.PageBounds
+                $targetW = if ($bounds.Width -gt 0) { $bounds.Width } else { $script:_labelImg.Width }
+                $targetH = if ($bounds.Height -gt 0) { $bounds.Height } else { $script:_labelImg.Height }
+                $rect = New-Object System.Drawing.Rectangle(0, 0, $targetW, $targetH)
+                
+                $e.Graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+                $e.Graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::None
+                $e.Graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+                $e.Graphics.DrawImage($script:_labelImg, $rect)
+                $e.HasMorePages = $false
+            })
+
+            $doc.Print()
+            $img.Dispose()
+            Remove-Item $tempImgPath -ErrorAction SilentlyContinue
+
+            @{ success = $true; printer = $printer; message = "Spooler: printed $copies label(s) successfully" } | ConvertTo-Json -Compress
+            exit 0
+        }
+    }
+
+    @{ success = $false; printer = $printer; message = "No label image provided" } | ConvertTo-Json -Compress
+    exit 0
+}
+
 # ACTION: PRINT RECEIPT
 if ($Action -eq "print") {
     if (-not (Test-Path $ReceiptJsonPath)) {

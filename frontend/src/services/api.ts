@@ -874,4 +874,22 @@ export const api = {
     if (!res.ok) throw new Error(data.error || 'Failed to print test slip');
     return data;
   },
+
+  async printBarcodeLabels(payload: {
+    printer_name?: string;
+    label_width_mm: number;
+    label_height_mm: number;
+    copies: number;
+    products: any[];
+    image_base64?: string;
+  }): Promise<{ success: boolean; printer: string; message: string }> {
+    const res = await fetch(`${API_BASE}/print/labels`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to spool barcode labels');
+    return data;
+  },
 };

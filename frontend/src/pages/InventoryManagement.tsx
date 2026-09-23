@@ -13,11 +13,13 @@ import {
   ArrowUpDown,
   Archive,
   Download,
-  Layers
+  Layers,
+  Barcode
 } from 'lucide-react';
 import type { Product, AppSettings } from '../types';
 import { api } from '../services/api';
 import { ProductBatchesModal } from '../components/ProductBatchesModal';
+import { BarcodeLabelModal } from '../components/BarcodeLabelModal';
 
 interface InventoryProps {
   settings: AppSettings | null;
@@ -118,6 +120,10 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
   // Batches & Prices Manager Modal
   const [isBatchModalOpen, setIsBatchModalOpen] = useState<boolean>(false);
   const [batchModalProduct, setBatchModalProduct] = useState<Product | null>(null);
+
+  // Barcode Labels Modal
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState<boolean>(false);
+  const [barcodeProducts, setBarcodeProducts] = useState<Product[]>([]);
 
   const currency = settings?.currency_symbol || 'Rs.';
   const isExpiryEnabled = settings?.feature_expiry === 'true';
@@ -366,6 +372,21 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export Inventory CSV</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (products.length > 0) {
+                setBarcodeProducts(products);
+                setIsBarcodeModalOpen(true);
+              }
+            }}
+            disabled={products.length === 0}
+            title="Create & Print Barcode Stickers for products using Xprinter XP-365B"
+            className="px-3.5 py-2 bg-indigo-950/60 hover:bg-indigo-900/80 disabled:opacity-50 disabled:cursor-not-allowed text-indigo-300 border border-indigo-700/80 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+          >
+            <Barcode className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Barcode Stickers</span>
           </button>
 
           {canManageInventory && (
@@ -621,6 +642,19 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
                             >
                               <Layers className="w-3.5 h-3.5 text-amber-400" />
                               <span>Batches</span>
+                            </button>
+                          )}
+                          {canManageInventory && (
+                            <button
+                              onClick={() => {
+                                setBarcodeProducts([p]);
+                                setIsBarcodeModalOpen(true);
+                              }}
+                              title="Print Barcode Stickers for this item (Xprinter XP-365B)"
+                              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-900/40 hover:bg-indigo-900/70 text-indigo-300 border border-indigo-700/60 transition cursor-pointer"
+                            >
+                              <Barcode className="w-3.5 h-3.5 text-indigo-400" />
+                              <span>Barcode</span>
                             </button>
                           )}
                           {canManageInventory && (
@@ -1143,6 +1177,19 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
             loadData();
             loadSummary();
           }}
+        />
+      )}
+
+      {/* Barcode & Label Sticker Designer/Printer Modal */}
+      {isBarcodeModalOpen && barcodeProducts.length > 0 && (
+        <BarcodeLabelModal
+          isOpen={isBarcodeModalOpen}
+          onClose={() => {
+            setIsBarcodeModalOpen(false);
+            setBarcodeProducts([]);
+          }}
+          products={barcodeProducts}
+          settings={settings}
         />
       )}
     </div>

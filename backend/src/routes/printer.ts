@@ -93,3 +93,32 @@ printerRouter.post('/test', async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ error: err.message || 'Failed to print test slip' });
   }
 });
+
+// POST /api/print/labels - Print product barcode sticker/label
+printerRouter.post('/labels', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { printer_name, label_width_mm, label_height_mm, copies, products, image_base64 } = req.body;
+
+    // Fallback printer name from settings if not supplied
+    let targetPrinter = printer_name;
+    if (!targetPrinter) {
+      const settings = await getSettingsMap();
+      targetPrinter = settings.printer_name || 'Xprinter XP-365B';
+    }
+
+    const result = await printerService.printLabels({
+      printer_name: targetPrinter,
+      label_width_mm: Number(label_width_mm) || 50,
+      label_height_mm: Number(label_height_mm) || 30,
+      copies: Number(copies) || 1,
+      products: products || [],
+      image_base64,
+    });
+
+    res.json(result);
+  } catch (err: any) {
+    console.error('Failed to print barcode labels:', err);
+    res.status(500).json({ error: err.message || 'Failed to spool barcode labels' });
+  }
+});
+

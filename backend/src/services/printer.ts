@@ -24,6 +24,15 @@ export interface PrintReceiptPayload {
   image_path?: string;
 }
 
+export interface PrintLabelsPayload {
+  printer_name?: string;
+  label_width_mm: number;
+  label_height_mm: number;
+  copies: number;
+  products: any[];
+  image_base64?: string;
+}
+
 function getScriptPath(): string {
   // Check dist first, then src
   const inDist = path.join(__dirname, 'printer_engine.ps1');
@@ -156,6 +165,48 @@ export const printerService = {
       return result;
     } finally {
       // Clean up temp file
+      try {
+        if (fs.existsSync(tempFile)) {
+          fs.unlinkSync(tempFile);
+        }
+      } catch (cleanErr) {
+        // Non-fatal
+      }
+    }
+  },
+
+  /**
+   * Print barcode stickers / labels directly through Windows Spooler
+   */
+  async printLabels(payload: PrintLabelsPayload): Promise<{ success: boolean; printer: string; message: string }> {
+    const { printer_name, label_width_mm, label_height_mm, copies, products, image_base64 } = payload;
+
+    const labelData = {
+      label_width_mm: label_width_mm || 50,
+      label_height_mm: label_height_mm || 30,
+      copies: copies || 1,
+      products: products || [],
+      image_base64,
+    };
+
+    const tempDir = os.tmpdir();
+    const tempFile = path.join(tempDir, `pos_label_${Date.now()}_${Math.random().toString(36).substring(7)}.json`);
+
+    fs.writeFileSync(tempFile, JSON.stringify(labelData, null, 2), { encoding: 'utf-8' });
+
+    try {
+      const args = [
+        '-Action', 'labels',
+        '-ReceiptJsonPath', tempFile,
+      ];
+
+      if (printer_name) {
+        args.push('-PrinterName', printer_name);
+      }
+
+      const result = await runPowerShell(args);
+      return result;
+    } finally {
       try {
         if (fs.existsSync(tempFile)) {
           fs.unlinkSync(tempFile);
