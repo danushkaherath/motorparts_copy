@@ -109,7 +109,7 @@ printerRouter.post('/labels', async (req: Request, res: Response): Promise<void>
     const result = await printerService.printLabels({
       printer_name: targetPrinter,
       label_width_mm: Number(label_width_mm) || 50,
-      label_height_mm: Number(label_height_mm) || 30,
+      label_height_mm: Number(label_height_mm) || 20,
       copies: Number(copies) || 1,
       products: products || [],
       image_base64,

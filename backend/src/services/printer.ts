@@ -183,7 +183,7 @@ export const printerService = {
 
     const labelData = {
       label_width_mm: label_width_mm || 50,
-      label_height_mm: label_height_mm || 30,
+      label_height_mm: label_height_mm || 20,
       copies: copies || 1,
       products: products || [],
       image_base64,

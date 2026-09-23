@@ -225,7 +225,7 @@ if ($Action -eq "labels") {
     $printer = Resolve-TargetPrinter $PrinterName
     $copies = if ($data.copies) { [int]$data.copies } else { 1 }
     $labelWidthMm = if ($data.label_width_mm) { [double]$data.label_width_mm } else { 50 }
-    $labelHeightMm = if ($data.label_height_mm) { [double]$data.label_height_mm } else { 30 }
+    $labelHeightMm = if ($data.label_height_mm) { [double]$data.label_height_mm } else { 20 }
 
     if ($data.image_base64) {
         $base64Data = $data.image_base64
