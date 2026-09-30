@@ -180,35 +180,75 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
             overflow: visible !important;
             height: auto !important;
           }
-          /* Hide everything */
+          /* Hide everything except receipt */
           body * {
             visibility: hidden !important;
           }
-          /* Show only the receipt */
           #thermal-receipt, #thermal-receipt * {
             visibility: visible !important;
           }
-          /* Break receipt out of all parent containers */
+          /* Break receipt out of modal containers onto page */
           #thermal-receipt {
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             z-index: 999999 !important;
-            width: ${is58mm ? '52mm' : '74mm'} !important;
+            width: ${is58mm ? '54mm' : '76mm'} !important;
             max-width: 100% !important;
             margin: 0 !important;
-            padding: 1mm 1.5mm !important;
+            padding: 1mm 2mm !important;
             color: #000000 !important;
             background: #ffffff !important;
             box-shadow: none !important;
             border-radius: 0 !important;
+            border: none !important;
             overflow: visible !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+            -webkit-font-smoothing: none !important;
+            image-rendering: pixelated !important;
+            text-rendering: geometricPrecision !important;
             ${rotate180 ? 'transform: rotate(180deg) !important; transform-origin: top center !important;' : 'transform: none !important;'}
           }
-          /* Force all text black for thermal print */
+          /* High contrast solid black bold text for 203 DPI thermal head */
           #thermal-receipt * {
             color: #000000 !important;
-            -webkit-text-stroke: 0.15px #000000;
+            font-weight: 700 !important;
+            -webkit-text-stroke: 0.35px #000000 !important;
+          }
+          #thermal-receipt .font-light,
+          #thermal-receipt .font-normal {
+            font-weight: 700 !important;
+          }
+          #thermal-receipt .font-semibold,
+          #thermal-receipt .font-bold,
+          #thermal-receipt h2 {
+            font-weight: 900 !important;
+            -webkit-text-stroke: 0.6px #000000 !important;
+          }
+          /* Scale up tiny micro fonts so thermal pins form solid letters without dithering */
+          #thermal-receipt .text-\[9\.5px\],
+          #thermal-receipt .text-\[10px\],
+          #thermal-receipt .text-\[10\.5px\],
+          #thermal-receipt .text-\[9px\] {
+            font-size: 11px !important;
+            line-height: 14px !important;
+          }
+          #thermal-receipt .text-xs,
+          #thermal-receipt .text-\[11px\] {
+            font-size: 12px !important;
+            line-height: 15px !important;
+          }
+          #thermal-receipt h2 {
+            font-size: 16px !important;
+          }
+          /* Solid crisp dividing lines */
+          #thermal-receipt .border-dashed,
+          #thermal-receipt .border-dotted,
+          #thermal-receipt .border-b,
+          #thermal-receipt .border-t {
+            border-color: #000000 !important;
+            border-style: solid !important;
+            border-width: 1px !important;
           }
           #thermal-receipt .text-gray-400,
           #thermal-receipt .text-gray-500,
