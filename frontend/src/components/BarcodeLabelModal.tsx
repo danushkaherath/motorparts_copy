@@ -62,7 +62,9 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
     showExpiry: false,
     showBatch: false,
     fontSize: 'medium',
-    rotation: (typeof window !== 'undefined' && parseInt(localStorage.getItem('pos_label_rotation') || '0', 10) as any) || 0,
+    rotation: (typeof window !== 'undefined' && localStorage.getItem('pos_label_rotation') !== null
+      ? (parseInt(localStorage.getItem('pos_label_rotation')!, 10) as any)
+      : 180),
     horizontalOffset: (typeof window !== 'undefined' && parseInt(localStorage.getItem('pos_label_offset') || '0', 10)) || 0,
   });
 
@@ -173,7 +175,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
       <style>{`
         @media print {
           @page {
-            size: portrait;
+            size: ${activeDim.widthMm}mm ${activeDim.heightMm}mm;
             margin: 0mm !important;
           }
           html, body {
@@ -190,7 +192,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
             visibility: visible !important;
           }
           #barcode-print-container {
-            position: fixed !important;
+            position: absolute !important;
             left: ${config.horizontalOffset || 0}mm !important;
             top: 0 !important;
             width: ${activeDim.widthMm}mm !important;
