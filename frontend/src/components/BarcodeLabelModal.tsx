@@ -39,6 +39,7 @@ interface LabelConfig {
   showBatch: boolean;
   fontSize: 'small' | 'medium' | 'large';
   rotation: 0 | 90 | 180 | 270;
+  horizontalOffset: number;
 }
 
 export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
@@ -62,6 +63,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
     showBatch: false,
     fontSize: 'medium',
     rotation: (typeof window !== 'undefined' && parseInt(localStorage.getItem('pos_label_rotation') || '0', 10) as any) || 0,
+    horizontalOffset: (typeof window !== 'undefined' && parseInt(localStorage.getItem('pos_label_offset') || '0', 10)) || 0,
   });
 
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
@@ -74,20 +76,25 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
   const storeName = settings?.store_name || 'GROCERY STORE';
   const currentProduct = products[activeProductIndex] || products[0];
 
-  // Dimensions in mm and px (assuming 96 DPI screen preview, 203 DPI thermal)
+  // Dimensions in mm and px (at standard 96 DPI: 1mm ≈ 3.78px)
   const sizeMap: Record<LabelSizePreset, { widthMm: number; heightMm: number; widthPx: number; heightPx: number; name: string }> = {
-    '50x20': { widthMm: 50, heightMm: 20, widthPx: 260, heightPx: 104, name: '50mm × 20mm (Standard Xprinter XP-365B Label)' },
-    '50x30': { widthMm: 50, heightMm: 30, widthPx: 260, heightPx: 156, name: '50mm × 30mm (Sticker Roll)' },
-    '40x30': { widthMm: 40, heightMm: 30, widthPx: 220, heightPx: 156, name: '40mm × 30mm (Compact Sticker)' },
-    '38x25': { widthMm: 38, heightMm: 25, widthPx: 200, heightPx: 130, name: '38mm × 25mm (Small Retail Sticker)' },
-    'shelf_80x40': { widthMm: 80, heightMm: 40, widthPx: 360, heightPx: 180, name: '80mm × 40mm (Shelf Edge Label)' },
+    '50x20': { widthMm: 50, heightMm: 20, widthPx: 190, heightPx: 76, name: '50mm × 20mm (Standard Xprinter XP-365B Label)' },
+    '50x30': { widthMm: 50, heightMm: 30, widthPx: 190, heightPx: 114, name: '50mm × 30mm (Sticker Roll)' },
+    '40x30': { widthMm: 40, heightMm: 30, widthPx: 152, heightPx: 114, name: '40mm × 30mm (Compact Sticker)' },
+    '38x25': { widthMm: 38, heightMm: 25, widthPx: 144, heightPx: 95, name: '38mm × 25mm (Small Retail Sticker)' },
+    'shelf_80x40': { widthMm: 80, heightMm: 40, widthPx: 302, heightPx: 151, name: '80mm × 40mm (Shelf Edge Label)' },
   };
 
   const activeDim = sizeMap[config.size];
+  const isCompact = activeDim.heightMm <= 20;
+
+  // Smaller, compact barcode width and height
+  const barcodeWidth = isCompact ? 120 : Math.min(160, activeDim.widthPx - 40);
+  const barcodeHeight = isCompact ? 11 : 22;
 
   // Barcode data computation
   const barcodeValue = String(currentProduct.barcode || currentProduct.sku || '00000000').trim();
-  const bars = generateCode128Bars(barcodeValue, activeDim.widthPx - 36);
+  const bars = generateCode128Bars(barcodeValue, barcodeWidth);
 
   // Total labels to print
   const totalLabels = products.length * config.copiesPerProduct;
@@ -169,6 +176,13 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
             size: portrait;
             margin: 0mm !important;
           }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+            text-align: left !important;
+          }
           body * {
             visibility: hidden !important;
           }
@@ -176,16 +190,18 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
             visibility: visible !important;
           }
           #barcode-print-container {
-            position: absolute !important;
-            left: 0 !important;
+            position: fixed !important;
+            left: ${config.horizontalOffset || 0}mm !important;
             top: 0 !important;
             width: ${activeDim.widthMm}mm !important;
+            max-width: ${activeDim.widthMm}mm !important;
             margin: 0 !important;
             padding: 0 !important;
-            background: #fff !important;
+            background: #ffffff !important;
           }
           .barcode-sticker-item {
             width: ${activeDim.widthMm}mm !important;
+            max-width: ${activeDim.widthMm}mm !important;
             height: ${activeDim.heightMm}mm !important;
             page-break-after: always !important;
             break-after: page !important;
@@ -194,8 +210,9 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
             align-items: center !important;
             justify-content: space-between !important;
             box-sizing: border-box !important;
-            padding: ${activeDim.heightMm <= 20 ? '1mm' : '1.5mm'} !important;
+            padding: 0.6mm 1.5mm !important;
             overflow: hidden !important;
+            margin: 0 !important;
             ${config.rotation ? `transform: rotate(${config.rotation}deg) !important; transform-origin: center center !important;` : ''}
           }
         }
@@ -207,10 +224,8 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
       <div id="barcode-print-container" ref={printAreaRef} className="hidden print:block">
         {products.map((prod, pIdx) => {
           const pBarcode = String(prod.barcode || prod.sku || '00000000').trim();
-          const pBars = generateCode128Bars(pBarcode, activeDim.widthPx - 36);
+          const pBars = generateCode128Bars(pBarcode, barcodeWidth);
           const copies = Array.from({ length: Math.max(1, config.copiesPerProduct) });
-          const isCompact = activeDim.heightMm <= 20;
-          const barcodeH = isCompact ? 15 : activeDim.heightPx > 140 ? 38 : 28;
 
           return copies.map((_, cIdx) => (
             <div
@@ -236,12 +251,12 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                 </div>
               )}
 
-              {/* Barcode Vector Bars */}
+              {/* Barcode Vector Bars - Compact size (120px / ~32mm wide) */}
               <div className="w-full flex flex-col items-center justify-center my-0.5">
                 <svg
-                  width={activeDim.widthPx - 36}
-                  height={barcodeH}
-                  viewBox={`0 0 ${activeDim.widthPx - 36} ${barcodeH}`}
+                  width={barcodeWidth}
+                  height={barcodeHeight}
+                  viewBox={`0 0 ${barcodeWidth} ${barcodeHeight}`}
                   className="shape-crispEdges"
                 >
                   <rect width="100%" height="100%" fill="#ffffff" />
@@ -251,7 +266,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                       x={b.x}
                       y={0}
                       width={b.width}
-                      height={barcodeH}
+                      height={barcodeHeight}
                       fill="#000000"
                     />
                   ))}
@@ -505,6 +520,70 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                 </div>
               </div>
 
+              {/* Horizontal Position / Alignment Shift */}
+              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <label className="block text-xs font-bold text-slate-200">
+                    Horizontal Alignment (Shift Left / Right)
+                  </label>
+                  <p className="text-[11px] text-slate-400">
+                    Shift label position to match your printer's roll holder. Offset: <strong className="text-amber-400">{config.horizontalOffset > 0 ? `+${config.horizontalOffset}mm` : `${config.horizontalOffset}mm`}</strong>
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { label: 'Left (0mm)', val: 0 },
+                    { label: 'Center (+15mm)', val: 15 },
+                    { label: '-5mm', val: -5 },
+                    { label: '+5mm', val: 5 },
+                  ].map((preset) => (
+                    <button
+                      key={preset.val}
+                      type="button"
+                      onClick={() => {
+                        setConfig({ ...config, horizontalOffset: preset.val });
+                        localStorage.setItem('pos_label_offset', String(preset.val));
+                      }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        config.horizontalOffset === preset.val
+                          ? 'bg-amber-500 text-slate-950 shadow-sm'
+                          : 'bg-slate-850 border border-slate-750 text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+
+                  <div className="flex items-center gap-0.5 ml-1 bg-slate-900 border border-slate-700 rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = (config.horizontalOffset || 0) - 2;
+                        setConfig({ ...config, horizontalOffset: next });
+                        localStorage.setItem('pos_label_offset', String(next));
+                      }}
+                      className="px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded font-bold cursor-pointer"
+                      title="Nudge 2mm Left"
+                    >
+                      ◀ -2mm
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = (config.horizontalOffset || 0) + 2;
+                        setConfig({ ...config, horizontalOffset: next });
+                        localStorage.setItem('pos_label_offset', String(next));
+                      }}
+                      className="px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded font-bold cursor-pointer"
+                      title="Nudge 2mm Right"
+                    >
+                      +2mm ▶
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Element Toggles (Customization) */}
               <div className="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-4 space-y-3">
                 <span className="block text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -595,8 +674,6 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               {/* The Physical Sticker Mockup */}
               <div className="p-4 bg-slate-900/80 rounded-2xl border border-slate-800 shadow-inner flex items-center justify-center">
                 {(() => {
-                  const isCompact = activeDim.heightMm <= 20;
-                  const previewBarcodeH = isCompact ? 15 : activeDim.heightPx > 140 ? 38 : 28;
                   return (
                     <div
                       ref={previewRef}
@@ -622,12 +699,12 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                         </div>
                       )}
 
-                      {/* Barcode Vector Bars */}
+                      {/* Barcode Vector Bars - Compact size */}
                       <div className="w-full flex flex-col items-center justify-center my-0.5">
                         <svg
-                          width={activeDim.widthPx - 36}
-                          height={previewBarcodeH}
-                          viewBox={`0 0 ${activeDim.widthPx - 36} ${previewBarcodeH}`}
+                          width={barcodeWidth}
+                          height={barcodeHeight}
+                          viewBox={`0 0 ${barcodeWidth} ${barcodeHeight}`}
                           className="shape-crispEdges"
                         >
                           <rect width="100%" height="100%" fill="#ffffff" />
@@ -637,7 +714,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                               x={b.x}
                               y={0}
                               width={b.width}
-                              height={previewBarcodeH}
+                              height={barcodeHeight}
                               fill="#000000"
                             />
                           ))}
