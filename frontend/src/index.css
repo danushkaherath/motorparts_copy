@@ -32,13 +32,16 @@
     visibility: visible;
   }
   #thermal-receipt {
-    position: absolute;
+    position: fixed;
     left: 0;
     top: 0;
+    z-index: 999999;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     color: black !important;
     background: white !important;
+    overflow: visible !important;
+    transform: none !important;
   }
 }

@@ -46,7 +46,12 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
   const isVoided = (receipt as any).status === 'VOIDED';
 
   const handleBrowserPrint = () => {
-    window.print();
+    // Wait for a full repaint so the receipt content is rendered in the DOM
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.print();
+      });
+    });
   };
 
   const handlePrint = async () => {
@@ -133,7 +138,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
       hasAutoPrintedRef.current = true;
       const timer = setTimeout(() => {
         handlePrint();
-      }, 300);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -165,25 +170,34 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
+            overflow: visible !important;
+            height: auto !important;
           }
+          /* Hide everything */
           body * {
             visibility: hidden !important;
           }
+          /* Show only the receipt */
           #thermal-receipt, #thermal-receipt * {
             visibility: visible !important;
           }
+          /* Break receipt out of all parent containers */
           #thermal-receipt {
-            position: absolute !important;
+            position: fixed !important;
             left: 0 !important;
             top: 0 !important;
+            z-index: 999999 !important;
             width: ${is58mm ? '52mm' : '74mm'} !important;
-            margin: 0 auto !important;
+            margin: 0 !important;
             padding: 1mm 1.5mm !important;
             color: #000000 !important;
             background: #ffffff !important;
             box-shadow: none !important;
             border-radius: 0 !important;
+            overflow: visible !important;
+            transform: none !important;
           }
+          /* Force all text black for thermal print */
           #thermal-receipt * {
             color: #000000 !important;
             -webkit-text-stroke: 0.15px #000000;
