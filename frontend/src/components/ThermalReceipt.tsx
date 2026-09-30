@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Printer, X, Check, Loader2 } from 'lucide-react';
+import { Printer, X, Check, Loader2, RotateCw } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import type { OrderReceipt, AppSettings } from '../types';
 import { api } from '../services/api';
@@ -15,13 +15,14 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
   settings,
   onClose,
 }) => {
-  if (!receipt) return null;
-
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
   const [printFeedback, setPrintFeedback] = useState<string | null>(null);
   const [spoolerFailed, setSpoolerFailed] = useState<boolean>(false);
+  const [rotate180, setRotate180] = useState<boolean>(() => {
+    return typeof window !== 'undefined' && localStorage.getItem('pos_receipt_rotate180') === 'true';
+  });
   const receiptRef = useRef<HTMLDivElement>(null);
-  const hasAutoPrintedRef = useRef<boolean>(false);
+  const lastAutoPrintedReceiptIdRef = useRef<string | null>(null);
 
   const isLocalhost = typeof window !== 'undefined' && 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
@@ -31,22 +32,15 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
   const currency = settings?.currency_symbol || '$';
   const isTaxEnabled = settings?.feature_tax === 'true';
 
-  // Calculate customer savings from MRP discounts + bill-level discount
-  const items = Array.isArray(receipt.items) ? receipt.items : [];
-  const itemsSavings = items.reduce((acc, item) => {
-    const mrp = Number(item.mrp || 0);
-    const unitPrice = Number(item.unit_price || 0);
-    const qty = Number(item.quantity || 0);
-    if (mrp > unitPrice) {
-      return acc + ((mrp - unitPrice) * qty);
-    }
-    return acc;
-  }, 0);
-  const totalSavings = Math.round((itemsSavings + (receipt.discount_amount || 0)) * 100) / 100;
-  const isVoided = (receipt as any).status === 'VOIDED';
+  const toggleRotate180 = () => {
+    setRotate180(prev => {
+      const next = !prev;
+      localStorage.setItem('pos_receipt_rotate180', String(next));
+      return next;
+    });
+  };
 
   const handleBrowserPrint = () => {
-    // Wait for a full repaint so the receipt content is rendered in the DOM
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         window.print();
@@ -55,6 +49,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
   };
 
   const handlePrint = async () => {
+    if (!receipt) return;
     // If accessing from remote server/VPS, cloud backend cannot access cashier's USB printer.
     // Fall back to clean Browser Print directly!
     if (!isLocalhost || spoolerFailed) {
@@ -73,8 +68,6 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
       const targetNode = receiptRef.current || document.getElementById('thermal-receipt');
       if (targetNode) {
         try {
-          // Inject temporary thermal-print overrides: force ALL text to pure black & heavier weight
-          // (gray/light text disappears on 203 DPI thermal printers)
           const thermalStyle = document.createElement('style');
           thermalStyle.id = 'thermal-print-overrides';
           thermalStyle.textContent = `
@@ -90,7 +83,6 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
           `;
           document.head.appendChild(thermalStyle);
 
-          // Small delay to let styles apply before capture
           await new Promise(r => setTimeout(r, 50));
 
           imageBase64 = await toPng(targetNode, {
@@ -103,11 +95,8 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
             },
           });
 
-          // Remove temporary overrides so on-screen preview stays elegant
           thermalStyle.remove();
-          console.log('DOM capture success, image base64 length:', imageBase64?.length);
         } catch (captureErr) {
-          // Clean up style overrides even on failure
           document.getElementById('thermal-print-overrides')?.remove();
           console.error('DOM capture error, falling back to text spooler:', captureErr);
         }
@@ -132,16 +121,18 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
     }
   };
 
-  // Auto-print once on mount if enabled
+  // Auto-print whenever a new receipt is opened
   useEffect(() => {
-    if (settings?.printer_auto_print !== 'false' && !hasAutoPrintedRef.current) {
-      hasAutoPrintedRef.current = true;
+    if (!receipt) return;
+    const currentKey = receipt.order_number || String(receipt.id || Date.now());
+    if (settings?.printer_auto_print !== 'false' && lastAutoPrintedReceiptIdRef.current !== currentKey) {
+      lastAutoPrintedReceiptIdRef.current = currentKey;
       const timer = setTimeout(() => {
         handlePrint();
-      }, 800);
+      }, 400);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [receipt, settings?.printer_auto_print]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -157,14 +148,30 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [receipt, settings, isPrinting, spoolerFailed]);
 
+  if (!receipt) return null;
+
+  // Calculate customer savings from MRP discounts + bill-level discount
+  const items = Array.isArray(receipt.items) ? receipt.items : [];
+  const itemsSavings = items.reduce((acc, item) => {
+    const mrp = Number(item.mrp || 0);
+    const unitPrice = Number(item.unit_price || 0);
+    const qty = Number(item.quantity || 0);
+    if (mrp > unitPrice) {
+      return acc + ((mrp - unitPrice) * qty);
+    }
+    return acc;
+  }, 0);
+  const totalSavings = Math.round((itemsSavings + (receipt.discount_amount || 0)) * 100) / 100;
+  const isVoided = (receipt as any).status === 'VOIDED';
+
   return (
     <>
       {/* ESC/POS Thermal Print Stylesheet */}
       <style>{`
         @media print {
           @page {
-            size: ${is58mm ? '58mm' : '80mm'} auto;
-            margin: 0mm !important;
+            size: portrait;
+            margin: 0mm;
           }
           html, body {
             margin: 0 !important;
@@ -183,11 +190,12 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
           }
           /* Break receipt out of all parent containers */
           #thermal-receipt {
-            position: fixed !important;
+            position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             z-index: 999999 !important;
             width: ${is58mm ? '52mm' : '74mm'} !important;
+            max-width: 100% !important;
             margin: 0 !important;
             padding: 1mm 1.5mm !important;
             color: #000000 !important;
@@ -195,7 +203,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
             box-shadow: none !important;
             border-radius: 0 !important;
             overflow: visible !important;
-            transform: none !important;
+            ${rotate180 ? 'transform: rotate(180deg) !important; transform-origin: top center !important;' : 'transform: none !important;'}
           }
           /* Force all text black for thermal print */
           #thermal-receipt * {
@@ -439,14 +447,28 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
               New Sale (Esc)
             </button>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={toggleRotate180}
+                className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg border transition cursor-pointer ${
+                  rotate180
+                    ? 'bg-amber-950/60 border-amber-600/70 text-amber-300 font-medium'
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                }`}
+                title="Rotate printout 180 degrees (for inverted/upside-down printer paper feed)"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+                <span>{rotate180 ? 'Flipped 180°' : 'Flip 180°'}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleBrowserPrint}
                 className="text-xs text-slate-500 hover:text-slate-300 underline transition cursor-pointer"
                 title="Open traditional browser print preview window"
               >
-                Browser Preview
+                Preview
               </button>
 
               <button
