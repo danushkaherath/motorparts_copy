@@ -210,7 +210,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
           const pBars = generateCode128Bars(pBarcode, activeDim.widthPx - 36);
           const copies = Array.from({ length: Math.max(1, config.copiesPerProduct) });
           const isCompact = activeDim.heightMm <= 20;
-          const barcodeH = isCompact ? 20 : activeDim.heightPx > 140 ? 38 : 28;
+          const barcodeH = isCompact ? 15 : activeDim.heightPx > 140 ? 38 : 28;
 
           return copies.map((_, cIdx) => (
             <div
@@ -219,20 +219,20 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               style={{
                 width: `${activeDim.widthMm}mm`,
                 height: `${activeDim.heightMm}mm`,
-                padding: isCompact ? '1mm' : '1.5mm',
+                padding: isCompact ? '0.6mm 1.5mm' : '1.5mm',
               }}
             >
               {/* Header Store Name */}
               {config.showStoreName && (
-                <div className={`font-black uppercase tracking-wider truncate w-full text-center border-b border-black/40 ${isCompact ? 'text-[8.5px] pb-0 mb-0.5 leading-none' : 'text-[10px] pb-0.5 mb-0.5'}`}>
-                  {storeName}
+                <div className={`font-black uppercase tracking-wider w-full text-center border-b border-black/40 overflow-visible ${isCompact ? 'text-[8px] leading-normal pb-0.5' : 'text-[10px] pb-0.5 mb-0.5'}`}>
+                  <span className="block truncate">{storeName}</span>
                 </div>
               )}
 
               {/* Product Name */}
               {config.showProductName && (
-                <div className={`font-bold leading-tight w-full text-center px-0.5 ${isCompact ? 'text-[9px] truncate' : 'text-[11px] line-clamp-2'}`}>
-                  {prod.name}
+                <div className={`font-bold w-full text-center px-0.5 overflow-visible ${isCompact ? 'text-[8.5px] leading-normal py-0.5' : 'text-[11px] line-clamp-2'}`}>
+                  <span className="block truncate">{prod.name}</span>
                 </div>
               )}
 
@@ -257,7 +257,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                   ))}
                 </svg>
                 {config.showBarcodeNumber && (
-                  <span className={`font-mono tracking-widest text-black font-bold ${isCompact ? 'text-[7.5px] leading-none mt-0.5' : 'text-[9px] mt-0.5'}`}>
+                  <span className={`font-mono tracking-widest text-black font-bold ${isCompact ? 'text-[7px] leading-tight mt-0.5' : 'text-[9px] mt-0.5'}`}>
                     {pBarcode}
                   </span>
                 )}
@@ -268,7 +268,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                 <div className="w-full flex items-center justify-center border-t border-black/30 pt-0.5 px-0.5">
                   {/* Left: Batch or Expiry only if enabled */}
                   {(config.showBatch || config.showExpiry) && (
-                    <div className="text-[7.5px] font-mono text-left leading-tight mr-auto">
+                    <div className="text-[7px] font-mono text-left leading-tight mr-auto">
                       {config.showBatch && prod.batch_number && (
                         <div>B:{prod.batch_number}</div>
                       )}
@@ -280,19 +280,19 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
 
                   {/* MRP (Prominent and standalone when showPrice is off) */}
                   {config.showMrp && !config.showPrice ? (
-                    <div className="text-center font-mono font-black text-black leading-none">
-                      <span className={isCompact ? 'text-[8.5px] font-bold' : 'text-[9.5px] font-bold'}>MRP: </span>
-                      <span className={isCompact ? 'text-[10px] font-black' : 'text-[11px] font-black'}>{currency} {Number(prod.mrp || prod.selling_price || 0).toFixed(2)}</span>
+                    <div className="text-center font-mono font-black text-black leading-tight">
+                      <span className={isCompact ? 'text-[8px] font-bold' : 'text-[9.5px] font-bold'}>MRP: </span>
+                      <span className={isCompact ? 'text-[9.5px] font-black' : 'text-[11px] font-black'}>{currency} {Number(prod.mrp || prod.selling_price || 0).toFixed(2)}</span>
                     </div>
                   ) : (
-                    <div className="text-right ml-auto">
+                    <div className="text-right ml-auto leading-tight">
                       {config.showMrp && Number(prod.mrp) > Number(prod.selling_price) && (
-                        <span className="text-[8.5px] line-through text-black/70 mr-1 font-mono">
+                        <span className="text-[8px] line-through text-black/70 mr-1 font-mono">
                           {currency}{Number(prod.mrp).toFixed(2)}
                         </span>
                       )}
                       {config.showPrice && (
-                        <span className="text-[11px] font-black font-mono">
+                        <span className="text-[10px] font-black font-mono">
                           {currency}{Number(prod.selling_price || 0).toFixed(2)}
                         </span>
                       )}
@@ -596,7 +596,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               <div className="p-4 bg-slate-900/80 rounded-2xl border border-slate-800 shadow-inner flex items-center justify-center">
                 {(() => {
                   const isCompact = activeDim.heightMm <= 20;
-                  const previewBarcodeH = isCompact ? 20 : activeDim.heightPx > 140 ? 38 : 28;
+                  const previewBarcodeH = isCompact ? 15 : activeDim.heightPx > 140 ? 38 : 28;
                   return (
                     <div
                       ref={previewRef}
@@ -610,15 +610,15 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                     >
                       {/* Top Store Header */}
                       {config.showStoreName && (
-                        <div className={`w-full text-center font-black uppercase tracking-wider border-b border-black/30 truncate text-black leading-none ${isCompact ? 'text-[8.5px] pb-0' : 'text-[10px] pb-0.5'}`}>
-                          {storeName}
+                        <div className={`w-full text-center font-black uppercase tracking-wider border-b border-black/30 text-black ${isCompact ? 'text-[8px] leading-normal pb-0.5' : 'text-[10px] pb-0.5'}`}>
+                          <span className="block truncate">{storeName}</span>
                         </div>
                       )}
 
                       {/* Product Title */}
                       {config.showProductName && (
-                        <div className={`w-full text-center font-bold leading-tight text-black px-0.5 my-0.5 ${isCompact ? 'text-[9.5px] truncate' : 'text-[11px] line-clamp-2'}`}>
-                          {currentProduct.name}
+                        <div className={`w-full text-center font-bold text-black px-0.5 my-0.5 ${isCompact ? 'text-[8.5px] leading-normal py-0.5' : 'text-[11px] line-clamp-2'}`}>
+                          <span className="block truncate">{currentProduct.name}</span>
                         </div>
                       )}
 
@@ -643,7 +643,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                           ))}
                         </svg>
                         {config.showBarcodeNumber && (
-                          <span className={`font-mono tracking-widest text-black font-bold mt-0.5 leading-none ${isCompact ? 'text-[7.5px]' : 'text-[9px]'}`}>
+                          <span className={`font-mono tracking-widest text-black font-bold mt-0.5 leading-tight ${isCompact ? 'text-[7px]' : 'text-[9px]'}`}>
                             {barcodeValue}
                           </span>
                         )}
