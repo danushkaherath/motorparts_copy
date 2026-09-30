@@ -31,6 +31,11 @@ printerRouter.get('/printers', async (_req: Request, res: Response): Promise<voi
 // POST /api/print/receipt - Print customer receipt directly
 printerRouter.post('/receipt', async (req: Request, res: Response): Promise<void> => {
   try {
+    if (process.platform !== 'win32') {
+      res.status(400).json({ error: 'Direct Windows Spooler is only available on a local Windows host. Use Browser Print.' });
+      return;
+    }
+
     const { receipt, settings, open_drawer, printer_name, receipt_width, image_base64 } = req.body;
     if (!receipt) {
       res.status(400).json({ error: 'Missing receipt payload' });
@@ -75,6 +80,11 @@ printerRouter.post('/receipt', async (req: Request, res: Response): Promise<void
 // POST /api/print/drawer - Trigger cash drawer kick
 printerRouter.post('/drawer', async (req: Request, res: Response): Promise<void> => {
   try {
+    if (process.platform !== 'win32') {
+      res.status(400).json({ error: 'Cash drawer trigger requires local Windows host.' });
+      return;
+    }
+
     const { printer_name } = req.body;
     const result = await printerService.kickDrawer(printer_name);
     res.json(result);
@@ -86,6 +96,11 @@ printerRouter.post('/drawer', async (req: Request, res: Response): Promise<void>
 // POST /api/print/test - Print test page
 printerRouter.post('/test', async (req: Request, res: Response): Promise<void> => {
   try {
+    if (process.platform !== 'win32') {
+      res.status(400).json({ error: 'Test print via OS spooler requires local Windows host. Use Browser Print.' });
+      return;
+    }
+
     const { printer_name, receipt_width } = req.body;
     const result = await printerService.testPrint(printer_name, receipt_width);
     res.json(result);
@@ -97,6 +112,11 @@ printerRouter.post('/test', async (req: Request, res: Response): Promise<void> =
 // POST /api/print/labels - Print product barcode sticker/label
 printerRouter.post('/labels', async (req: Request, res: Response): Promise<void> => {
   try {
+    if (process.platform !== 'win32') {
+      res.status(400).json({ error: 'Direct Windows Spooler is only available on a local Windows host. Use Browser Print.' });
+      return;
+    }
+
     const { printer_name, label_width_mm, label_height_mm, copies, products, image_base64 } = req.body;
 
     // Fallback printer name from settings if not supplied

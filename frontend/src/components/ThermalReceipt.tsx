@@ -19,8 +19,12 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
 
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
   const [printFeedback, setPrintFeedback] = useState<string | null>(null);
+  const [spoolerFailed, setSpoolerFailed] = useState<boolean>(false);
   const receiptRef = useRef<HTMLDivElement>(null);
   const hasAutoPrintedRef = useRef<boolean>(false);
+
+  const isLocalhost = typeof window !== 'undefined' && 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   const widthMm = settings?.receipt_width === '58' ? '58mm' : '80mm';
   const is58mm = settings?.receipt_width === '58';
@@ -41,7 +45,18 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
   const totalSavings = Math.round((itemsSavings + (receipt.discount_amount || 0)) * 100) / 100;
   const isVoided = (receipt as any).status === 'VOIDED';
 
+  const handleBrowserPrint = () => {
+    window.print();
+  };
+
   const handlePrint = async () => {
+    // If accessing from remote server/VPS, cloud backend cannot access cashier's USB printer.
+    // Fall back to clean Browser Print directly!
+    if (!isLocalhost || spoolerFailed) {
+      handleBrowserPrint();
+      return;
+    }
+
     if (isPrinting) return;
     try {
       setIsPrinting(true);
@@ -100,16 +115,16 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
       setPrintFeedback(`Printed successfully on ${res.printer}!`);
       setTimeout(() => setPrintFeedback(null), 3500);
     } catch (err: any) {
-      console.warn('Direct spooler print failed:', err);
-      setPrintFeedback('Spooler error: ' + err.message);
-      setTimeout(() => setPrintFeedback(null), 4000);
+      console.warn('Direct spooler print failed, opening browser print dialog:', err);
+      setSpoolerFailed(true);
+      setPrintFeedback('Direct spooler unavailable. Opening browser print dialog...');
+      setTimeout(() => {
+        handleBrowserPrint();
+        setPrintFeedback(null);
+      }, 150);
     } finally {
       setIsPrinting(false);
     }
-  };
-
-  const handleBrowserPrint = () => {
-    window.print();
   };
 
   // Auto-print once on mount if enabled
@@ -135,10 +150,54 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [receipt, settings, isPrinting]);
+  }, [receipt, settings, isPrinting, spoolerFailed]);
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-[100] p-4">
+    <>
+      {/* ESC/POS Thermal Print Stylesheet */}
+      <style>{`
+        @media print {
+          @page {
+            size: ${is58mm ? '58mm' : '80mm'} auto;
+            margin: 0mm !important;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
+          body * {
+            visibility: hidden !important;
+          }
+          #thermal-receipt, #thermal-receipt * {
+            visibility: visible !important;
+          }
+          #thermal-receipt {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: ${is58mm ? '52mm' : '74mm'} !important;
+            margin: 0 auto !important;
+            padding: 1mm 1.5mm !important;
+            color: #000000 !important;
+            background: #ffffff !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+          #thermal-receipt * {
+            color: #000000 !important;
+            -webkit-text-stroke: 0.15px #000000;
+          }
+          #thermal-receipt .text-gray-400,
+          #thermal-receipt .text-gray-500,
+          #thermal-receipt .text-gray-600,
+          #thermal-receipt .text-gray-700 {
+            color: #000000 !important;
+          }
+        }
+      `}</style>
+
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-[100] p-4 select-none print:hidden">
       <div className="bg-slate-900 border border-slate-750 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-850">
@@ -392,6 +451,6 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };

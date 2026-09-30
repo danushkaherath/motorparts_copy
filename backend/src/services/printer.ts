@@ -53,6 +53,10 @@ function getScriptPath(): string {
 
 function runPowerShell(args: string[]): Promise<any> {
   return new Promise((resolve, reject) => {
+    if (process.platform !== 'win32') {
+      return reject(new Error('Direct OS Spooler is only available on a local Windows host. Please use Browser Print.'));
+    }
+
     const scriptPath = getScriptPath();
     const psArgs = [
       '-NoProfile',
@@ -84,6 +88,14 @@ export const printerService = {
    * Get list of installed Windows printers and default printer
    */
   async getPrinters(): Promise<PrinterListResult> {
+    if (process.platform !== 'win32') {
+      return {
+        defaultPrinter: 'Browser Print (Client Printer)',
+        printers: [
+          { name: 'Browser Print (Client USB / Thermal)', isDefault: true, isThermal: true }
+        ]
+      };
+    }
     try {
       const res = await runPowerShell(['-Action', 'list']);
       return res as PrinterListResult;

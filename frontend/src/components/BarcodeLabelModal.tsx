@@ -90,11 +90,19 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
   // Total labels to print
   const totalLabels = products.length * config.copiesPerProduct;
 
+  const isLocalhost = typeof window !== 'undefined' && 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
   const handleBrowserPrint = () => {
     window.print();
   };
 
   const handleDirectThermalPrint = async () => {
+    if (!isLocalhost) {
+      handleBrowserPrint();
+      return;
+    }
+
     try {
       setIsPrinting(true);
       setFeedback(null);
