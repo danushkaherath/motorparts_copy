@@ -38,6 +38,7 @@ interface LabelConfig {
   showExpiry: boolean;
   showBatch: boolean;
   fontSize: 'small' | 'medium' | 'large';
+  rotation: 0 | 90 | 180 | 270;
 }
 
 export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
@@ -60,6 +61,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
     showExpiry: false,
     showBatch: false,
     fontSize: 'medium',
+    rotation: (typeof window !== 'undefined' && parseInt(localStorage.getItem('pos_label_rotation') || '0', 10) as any) || 0,
   });
 
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
@@ -164,7 +166,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
       <style>{`
         @media print {
           @page {
-            size: ${activeDim.widthMm}mm ${activeDim.heightMm}mm;
+            size: portrait;
             margin: 0mm !important;
           }
           body * {
@@ -194,6 +196,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
             box-sizing: border-box !important;
             padding: ${activeDim.heightMm <= 20 ? '1mm' : '1.5mm'} !important;
             overflow: hidden !important;
+            ${config.rotation ? `transform: rotate(${config.rotation}deg) !important; transform-origin: center center !important;` : ''}
           }
         }
       `}</style>
@@ -464,6 +467,44 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                 </div>
               </div>
 
+              {/* Print Orientation */}
+              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <label className="block text-xs font-bold text-slate-200">
+                    Print Orientation
+                  </label>
+                  <p className="text-[11px] text-slate-400">
+                    Rotate if your sticker roll feeds vertically or sideways
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { label: '0° Normal', value: 0 },
+                    { label: '90° Rotate', value: 90 },
+                    { label: '180° Invert', value: 180 },
+                    { label: '270° CCW', value: 270 },
+                  ].map((rot) => (
+                    <button
+                      key={rot.value}
+                      type="button"
+                      onClick={() => {
+                        const newRot = rot.value as 0 | 90 | 180 | 270;
+                        setConfig({ ...config, rotation: newRot });
+                        localStorage.setItem('pos_label_rotation', String(newRot));
+                      }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        (config.rotation || 0) === rot.value
+                          ? 'bg-amber-500 text-slate-950 shadow-sm'
+                          : 'bg-slate-850 border border-slate-750 text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      {rot.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Element Toggles (Customization) */}
               <div className="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-4 space-y-3">
                 <span className="block text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -563,6 +604,8 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                       style={{
                         width: `${activeDim.widthPx}px`,
                         height: `${activeDim.heightPx}px`,
+                        transform: config.rotation ? `rotate(${config.rotation}deg)` : 'none',
+                        transition: 'transform 0.2s ease',
                       }}
                     >
                       {/* Top Store Header */}
