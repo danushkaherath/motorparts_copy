@@ -197,7 +197,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
         }
       `}</style>
 
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-[100] p-4 select-none print:hidden">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-[100] p-4 select-none">
       <div className="bg-slate-900 border border-slate-750 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-850">
