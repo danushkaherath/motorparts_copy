@@ -193,68 +193,51 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
             left: 0 !important;
             top: 0 !important;
             z-index: 999999 !important;
-            width: ${is58mm ? '54mm' : '76mm'} !important;
+            width: ${is58mm ? '52mm' : '74mm'} !important;
             max-width: 100% !important;
             margin: 0 !important;
-            padding: 1mm 2mm !important;
+            padding: 2mm 1mm !important;
             color: #000000 !important;
             background: #ffffff !important;
             box-shadow: none !important;
             border-radius: 0 !important;
             border: none !important;
             overflow: visible !important;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
-            -webkit-font-smoothing: none !important;
-            image-rendering: pixelated !important;
-            text-rendering: geometricPrecision !important;
             ${rotate180 ? 'transform: rotate(180deg) !important; transform-origin: top center !important;' : 'transform: none !important;'}
           }
-          /* High contrast solid black bold text for 203 DPI thermal head */
-          #thermal-receipt * {
+          /* Clean, crisp normal receipt text (all pure black) */
+          #thermal-receipt, #thermal-receipt * {
             color: #000000 !important;
-            font-weight: 700 !important;
-            -webkit-text-stroke: 0.35px #000000 !important;
+            -webkit-text-stroke: 0 !important;
           }
-          #thermal-receipt .font-light,
+          /* Normal weights - no artificial bold */
+          #thermal-receipt .font-light {
+            font-weight: 400 !important;
+          }
           #thermal-receipt .font-normal {
-            font-weight: 700 !important;
+            font-weight: 400 !important;
+          }
+          #thermal-receipt .font-medium {
+            font-weight: 500 !important;
           }
           #thermal-receipt .font-semibold,
           #thermal-receipt .font-bold,
           #thermal-receipt h2 {
-            font-weight: 900 !important;
-            -webkit-text-stroke: 0.6px #000000 !important;
+            font-weight: 700 !important;
           }
-          /* Scale up tiny micro fonts so thermal pins form solid letters without dithering */
-          #thermal-receipt .text-\[9\.5px\],
-          #thermal-receipt .text-\[10px\],
-          #thermal-receipt .text-\[10\.5px\],
-          #thermal-receipt .text-\[9px\] {
-            font-size: 11px !important;
-            line-height: 14px !important;
+          /* Remove row item grid borders, keep clean classic dashed divider lines */
+          #thermal-receipt .border-dotted {
+            border: none !important;
           }
-          #thermal-receipt .text-xs,
-          #thermal-receipt .text-\[11px\] {
-            font-size: 12px !important;
-            line-height: 15px !important;
-          }
-          #thermal-receipt h2 {
-            font-size: 16px !important;
-          }
-          /* Solid crisp dividing lines */
-          #thermal-receipt .border-dashed,
-          #thermal-receipt .border-dotted,
-          #thermal-receipt .border-b,
-          #thermal-receipt .border-t {
+          #thermal-receipt .border-dashed {
             border-color: #000000 !important;
-            border-style: solid !important;
-            border-width: 1px !important;
+            border-style: dashed !important;
+            border-width: 0 0 1px 0 !important;
           }
-          #thermal-receipt .text-gray-400,
-          #thermal-receipt .text-gray-500,
-          #thermal-receipt .text-gray-600,
-          #thermal-receipt .text-gray-700 {
-            color: #000000 !important;
+          /* Remove savings box background & border in print */
+          #thermal-receipt .bg-gray-50,
+          #thermal-receipt .bg-red-50 {
+            background: transparent !important;
           }
         }
       `}</style>
