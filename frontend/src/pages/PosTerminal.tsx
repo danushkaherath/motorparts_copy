@@ -85,6 +85,7 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
   const [isRecentBillsOpen, setIsRecentBillsOpen] = useState<boolean>(false);
   const [isCashModalOpen, setIsCashModalOpen] = useState<boolean>(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState<boolean>(false);
+  const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState<boolean>(false);
   const [completedReceipt, setCompletedReceipt] = useState<OrderReceipt | null>(null);
 
   const barcodeInputRef = useRef<HTMLInputElement>(null);
@@ -465,28 +466,355 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
     }
   };
 
+  const renderOrderSummaryContent = (isMobileSheet: boolean = false) => (
+    <div className="flex flex-col h-full min-h-0 select-none">
+      {!isMobileSheet && (
+        <h3 className="text-base md:text-lg font-bold text-white tracking-tight mb-4 shrink-0">
+          Order Summary
+        </h3>
+      )}
+
+      {/* Customer & Loyalty Program Card */}
+      <div className="mb-4 p-3 rounded-xl bg-[#0a101d] border border-[#16233b] shrink-0">
+        {!attachedCustomer ? (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-cyan-400" />
+                Customer Loyalty
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsQuickCustomerModalOpen(true)}
+                className="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 hover:underline cursor-pointer"
+              >
+                <UserPlus className="w-3 h-3" />
+                + Register
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                placeholder="Customer Phone / Mobile..."
+                value={customerPhoneInput}
+                onChange={(e) => {
+                  setCustomerPhoneInput(e.target.value);
+                  if (customerSearchNotFound) setCustomerSearchNotFound(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleCustomerLookup();
+                  }
+                }}
+                className="flex-1 bg-[#0c1322] border border-[#1b283f] text-xs text-white px-2.5 py-1.5 rounded-lg outline-hidden focus:border-cyan-500 placeholder:text-slate-500 font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => handleCustomerLookup()}
+                disabled={isCustomerSearching || !customerPhoneInput.trim()}
+                className="px-2.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 text-white text-xs font-bold rounded-lg transition cursor-pointer"
+              >
+                {isCustomerSearching ? '...' : 'Find'}
+              </button>
+            </div>
+
+            {customerSearchNotFound && (
+              <div className="mt-2 text-[11px] text-rose-400 flex items-center justify-between">
+                <span>Not registered</span>
+                <button
+                  type="button"
+                  onClick={() => setIsQuickCustomerModalOpen(true)}
+                  className="underline hover:text-rose-300 font-semibold"
+                >
+                  Create Profile
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+                  <UserCheck className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-white truncate block">
+                    {attachedCustomer.name}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {attachedCustomer.phone}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setAttachedCustomer(null);
+                  setPointsToRedeem(0);
+                }}
+                className="text-slate-500 hover:text-rose-400 text-xs px-1 cursor-pointer"
+                title="Detach customer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Points status */}
+            <div className="pt-2 border-t border-[#16233b] flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1 text-amber-400 font-bold">
+                <Star className="w-3.5 h-3.5 fill-amber-400" />
+                {attachedCustomer.points} pts
+              </span>
+              <span className="text-[11px] text-slate-400">
+                Valued: <strong className="text-slate-300 font-mono">{currency}{(attachedCustomer.points * loyaltyPointValue).toFixed(2)}</strong>
+              </span>
+            </div>
+
+            {/* Points Redemption Control */}
+            {attachedCustomer.points > 0 && isLoyaltyEnabled && (
+              <div className="pt-1.5 flex items-center justify-between text-xs">
+                <span className="text-slate-400 text-[11px]">Redeem Points:</span>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min="0"
+                    max={attachedCustomer.points}
+                    value={pointsToRedeem || ''}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      const maxRedeemable = Math.min(
+                        attachedCustomer.points,
+                        Math.floor(subtotal / loyaltyPointValue)
+                      );
+                      setPointsToRedeem(Math.max(0, Math.min(val, maxRedeemable)));
+                    }}
+                    placeholder="0"
+                    className="w-16 bg-[#0c1322] border border-[#1b283f] text-right px-2 py-0.5 text-xs text-amber-300 font-mono rounded-lg outline-hidden focus:border-cyan-500"
+                  />
+                  {pointsToRedeem > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setPointsToRedeem(0)}
+                      className="text-slate-500 hover:text-rose-400 text-xs px-1 cursor-pointer"
+                      title="Clear redemption"
+                    >
+                      ✕
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const maxRedeemable = Math.min(
+                          attachedCustomer.points,
+                          Math.floor(subtotal / loyaltyPointValue)
+                        );
+                        setPointsToRedeem(maxRedeemable);
+                      }}
+                      className="text-[10px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-1.5 py-0.5 rounded font-bold transition cursor-pointer"
+                    >
+                      Max
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Summary Breakdown Metrics */}
+      <div className="space-y-3.5 text-xs md:text-sm">
+        <div className="flex items-center justify-between text-slate-400">
+          <span>Total Line Items:</span>
+          <span className="font-bold text-white font-mono">{cart.length}</span>
+        </div>
+
+        <div className="flex items-center justify-between text-slate-400">
+          <span>Total Units / Quantity:</span>
+          <span className="font-bold text-white font-mono">{formattedItemCount}</span>
+        </div>
+
+        <div className="flex items-center justify-between text-slate-400">
+          <span>Subtotal:</span>
+          <span className="font-bold text-white font-mono text-sm md:text-base">
+            {currency}{subtotal.toFixed(2)}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-slate-400 text-xs">
+          <span>Tax Mode:</span>
+          <span className="text-slate-400 font-mono">
+            {isTaxEnabled ? `Standard (${taxRate}%)` : 'Tax-Free / Direct Total'}
+          </span>
+        </div>
+
+        {isTaxEnabled && (
+          <div className="flex items-center justify-between text-slate-400 text-xs">
+            <span>Tax Amount:</span>
+            <span className="text-slate-300 font-mono">{currency}{taxAmount.toFixed(2)}</span>
+          </div>
+        )}
+
+        {/* Points Discount row */}
+        {pointsDiscount > 0 && (
+          <div className="flex items-center justify-between text-xs text-amber-400">
+            <span className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 fill-amber-400" />
+              Loyalty Discount ({pointsToRedeem} pts):
+            </span>
+            <span className="font-mono font-bold">- {currency}{pointsDiscount.toFixed(2)}</span>
+          </div>
+        )}
+
+        {/* Optional Discounts Widget */}
+        {isDiscountsEnabled && (
+          <div className="pt-2 border-t border-[#162135]">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400 text-xs">Discount:</span>
+              <div className="flex items-center gap-1">
+                <span className="text-slate-500 text-xs font-mono">- {currency}</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={discountAmount || ''}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    const threshold = parseFloat(settings?.discount_supervisor_threshold || '250');
+                    if (val > threshold && currentUser?.role !== 'admin' && currentUser?.role !== 'supervisor') {
+                      setPendingSupervisorAction({
+                        desc: `Approve custom discount of ${currency}${val.toFixed(2)}`,
+                        callback: () => setDiscountAmount(val),
+                      });
+                      setIsSupervisorModalOpen(true);
+                    } else {
+                      setDiscountAmount(val);
+                    }
+                  }}
+                  placeholder="0.00"
+                  className="w-20 bg-[#0c1322] border border-[#1b283f] text-right px-2 py-0.5 text-xs text-amber-300 font-mono rounded-lg outline-hidden focus:border-cyan-500"
+                />
+                {discountAmount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setDiscountAmount(0)}
+                    className="text-slate-500 hover:text-rose-400 text-xs px-1 cursor-pointer"
+                    title="Clear discount"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Big Total Row */}
+      <div className="pt-4 sm:pt-6 pb-3 sm:pb-4 border-t border-[#162135] mt-4 flex items-baseline justify-between shrink-0">
+        <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-white">Total:</span>
+        <span className="text-2xl sm:text-3xl font-black text-cyan-400 font-mono tracking-tight">
+          {currency}{totalDue.toFixed(2)}
+        </span>
+      </div>
+
+      {/* Live Customer Savings Banner */}
+      {totalCustomerSavings > 0 && (
+        <div className="p-3 rounded-xl bg-emerald-950/70 border border-emerald-500/50 flex items-center justify-between shadow-lg shrink-0 animate-in fade-in mb-3">
+          <div>
+            <span className="font-extrabold text-xs text-emerald-300 block font-sans">ඔබ ලැබූ ලාභය</span>
+            <span className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider">Customer Total Savings</span>
+          </div>
+          <span className="text-base font-black text-emerald-300 font-mono">
+            {currency}{totalCustomerSavings.toFixed(2)}
+          </span>
+        </div>
+      )}
+
+      {/* Spacer */}
+      {!isMobileSheet && <div className="flex-1 min-h-0" />}
+
+      {/* Bottom Actions */}
+      <div className="space-y-2.5 sm:space-y-3 pt-3 shrink-0">
+        {/* Recall Held Carts (if any exist) */}
+        {heldCarts.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              handleRecallCart(0);
+              if (isMobileSheet) setIsMobileSummaryOpen(false);
+            }}
+            className="w-full py-2.5 px-4 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer"
+          >
+            <PlayCircle className="w-4 h-4" />
+            <span>Recall Held Cart ({heldCarts.length}) [F1]</span>
+          </button>
+        )}
+
+        {/* Hold Cart Button (F8) */}
+        <button
+          type="button"
+          onClick={() => {
+            handleHoldCart();
+            if (isMobileSheet) setIsMobileSummaryOpen(false);
+          }}
+          disabled={cart.length === 0}
+          className="w-full py-3 px-4 bg-[#121a28] hover:bg-[#182337] disabled:opacity-30 disabled:cursor-not-allowed border border-[#1e2a40] text-slate-200 font-bold rounded-2xl flex items-center justify-center gap-2 text-sm transition cursor-pointer"
+        >
+          <PauseCircle className="w-4 h-4 text-slate-400" />
+          <span>Hold Cart</span>
+          <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-400 font-mono text-[10px]">
+            F8
+          </span>
+        </button>
+
+        {/* Proceed to Pay Button (F4) */}
+        <button
+          type="button"
+          onClick={() => {
+            if (cart.length > 0) {
+              if (isMobileSheet) setIsMobileSummaryOpen(false);
+              setIsCashModalOpen(true);
+            }
+          }}
+          disabled={cart.length === 0}
+          className="w-full py-3.5 px-4 bg-[#00d2df] hover:bg-[#15e1ee] disabled:opacity-30 disabled:cursor-not-allowed text-slate-950 font-black rounded-2xl flex items-center justify-center gap-2 text-base shadow-xl shadow-cyan-500/25 transition cursor-pointer active:scale-98"
+        >
+          <CreditCard className="w-5 h-5" />
+          <span>Proceed to Pay</span>
+          <span className="px-2 py-0.5 rounded bg-slate-950/20 text-slate-950 font-mono text-xs font-bold">
+            F4
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="flex-1 h-full min-h-0 flex bg-[#070b13] overflow-hidden select-none">
+    <div className="flex-1 h-full min-h-0 flex flex-col lg:flex-row bg-[#070b13] overflow-hidden select-none">
       
       {/* ========================================================================= */}
       {/* LEFT COLUMN: Top Search Bar & Active Checkout Items Table (Flex-1)        */}
       {/* ========================================================================= */}
-      <div className="flex-1 min-w-0 min-h-0 flex flex-col p-4 gap-3.5 h-full overflow-hidden">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col p-2.5 sm:p-4 gap-2.5 sm:gap-3.5 h-full overflow-hidden">
         
         {/* Shift Alert Banner (if no shift is open) */}
         {!activeShift && (
-          <div className="bg-amber-500/10 border border-amber-500/25 px-4 py-2 rounded-xl flex items-center justify-between text-amber-300 text-xs shrink-0">
+          <div className="bg-amber-500/10 border border-amber-500/25 px-3 sm:px-4 py-2 rounded-xl flex items-center justify-between text-amber-300 text-xs shrink-0">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>
-                <strong>Notice:</strong> No cash drawer shift is currently open. Cash reconciliation will not be tracked until opened.
+                <strong>Notice:</strong> No cash drawer shift is currently open.
               </span>
             </div>
             <button
               onClick={onOpenShiftModal}
-              className="px-3 py-1 bg-amber-500 text-slate-950 font-bold rounded-lg hover:bg-amber-400 transition cursor-pointer"
+              className="px-3 py-1 bg-amber-500 text-slate-950 font-bold rounded-lg hover:bg-amber-400 transition cursor-pointer shrink-0"
             >
-              Open Shift Now
+              Open Shift
             </button>
           </div>
         )}
@@ -496,9 +824,9 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
           <form onSubmit={handleBarcodeSubmit} ref={searchContainerRef} className="relative w-full">
             <div className="relative flex items-center bg-[#0d1424] border border-[#1b283f] focus-within:border-cyan-500/80 focus-within:ring-1 focus-within:ring-cyan-500/30 rounded-2xl shadow-lg transition">
               {/* Left Search Icon & Barcode Stripes Icon */}
-              <div className="flex items-center gap-1.5 pl-4 pointer-events-none">
+              <div className="flex items-center gap-1.5 pl-3 sm:pl-4 pointer-events-none">
                 <Search className="w-4 h-4 text-cyan-400 shrink-0" />
-                <div className="flex items-center gap-0.5 text-cyan-400/90 font-mono tracking-tighter text-xs font-bold shrink-0">
+                <div className="hidden sm:flex items-center gap-0.5 text-cyan-400/90 font-mono tracking-tighter text-xs font-bold shrink-0">
                   <span className="w-0.5 h-3.5 bg-cyan-400 inline-block rounded-full"></span>
                   <span className="w-1 h-3.5 bg-cyan-400 inline-block rounded-full"></span>
                   <span className="w-0.5 h-3.5 bg-cyan-400 inline-block rounded-full"></span>
@@ -512,8 +840,8 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
                 type="text"
                 value={barcodeInput}
                 onChange={(e) => setBarcodeInput(e.target.value)}
-                placeholder="Search product name, brand, category, or scan barcode... (Press F2)"
-                className="w-full bg-transparent text-white text-xs md:text-sm font-medium py-3 px-3 outline-hidden placeholder:text-slate-500"
+                placeholder="Search product, brand, or scan barcode... (F2)"
+                className="w-full bg-transparent text-white text-xs md:text-sm font-medium py-2.5 sm:py-3 px-2 sm:px-3 outline-hidden placeholder:text-slate-500"
                 autoFocus
               />
 
@@ -636,20 +964,20 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
               <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                 <ShoppingBag className="w-4 h-4" />
               </div>
-              <h2 className="text-xs md:text-sm font-bold text-cyan-400 tracking-wide">
-                Active Checkout Items ({cart.length})
+              <h2 className="text-xs sm:text-sm font-bold text-cyan-400 tracking-wide truncate">
+                Active Items ({cart.length})
               </h2>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
               <button
                 type="button"
                 onClick={() => setIsRecentBillsOpen(true)}
-                className="px-2.5 py-1 bg-[#121b2a] hover:bg-[#182438] text-slate-200 border border-[#1e2c44] rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                className="px-2 sm:px-2.5 py-1 bg-[#121b2a] hover:bg-[#182438] text-slate-200 border border-[#1e2c44] rounded-lg text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition cursor-pointer"
                 title="View Bills, Reprint Slips, and Void Bills"
               >
-                <Receipt className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Recent Bills</span>
+                <Receipt className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="hidden xs:inline">Recent Bills</span>
                 <span className="text-[9px] px-1 py-0.2 rounded bg-rose-950 text-rose-300 border border-rose-800 font-black uppercase">
                   Void
                 </span>
@@ -659,10 +987,10 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
                 type="button"
                 onClick={handleClearCart}
                 disabled={cart.length === 0}
-                className="text-slate-400 hover:text-rose-400 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+                className="text-slate-400 hover:text-rose-400 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center gap-1 text-xs font-semibold cursor-pointer px-1.5 py-1"
               >
-                <span>✕ Clear Cart</span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-400 text-[10px] font-mono">
+                <span>✕ Clear</span>
+                <span className="hidden sm:inline px-1 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-400 text-[10px] font-mono">
                   Esc
                 </span>
               </button>
@@ -752,8 +1080,9 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <table className="w-full text-left border-collapse">
+              <>
+                <div className="hidden sm:block flex-1 min-h-0 overflow-y-auto">
+                  <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-[#0e1626] border-b border-[#162135] text-slate-400 text-[11px] uppercase font-bold tracking-wider sticky top-0 z-10">
                       <th className="py-3 px-5">ITEM DETAILS</th>
@@ -878,27 +1207,105 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
                   </tbody>
                 </table>
               </div>
+
+              {/* Mobile Item Card List (Screens < sm) */}
+              <div className="sm:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2">
+                {cart.map((item, index) => {
+                  const unitLabel = item.unit === 'kg' ? '1000 G' : item.unit === 'g' ? '500 G' : item.unit ? item.unit.toUpperCase() : 'PCS';
+                  return (
+                    <div 
+                      key={`m_item_${item.product_id}_${item.batch_id || item.batch_number || index}`}
+                      className="bg-[#0e1626] border border-[#18253b] rounded-xl p-2.5 flex flex-col gap-2 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-extrabold text-white text-xs uppercase tracking-tight line-clamp-1">
+                            {item.product_name}
+                          </h4>
+                          <div className="text-[10px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5 font-mono">
+                            <span className="text-cyan-400 bg-cyan-950/60 px-1 py-0.2 rounded border border-cyan-800/50">
+                              {item.barcode}
+                            </span>
+                            {item.batch_number && (
+                              <span className="text-amber-300 bg-amber-950/50 border border-amber-600/40 px-1 py-0.2 rounded font-bold text-[9px]">
+                                B:{item.batch_number}
+                              </span>
+                            )}
+                            <span className="text-cyan-400 font-bold shrink-0">• {unitLabel}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeLineItem(index)}
+                          className="w-7 h-7 rounded-lg bg-rose-950/30 border border-rose-900/50 text-rose-400 hover:bg-rose-900/50 hover:text-rose-200 inline-flex items-center justify-center transition cursor-pointer shrink-0"
+                          title="Remove item"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-[#152033]">
+                        <div className="inline-flex items-center bg-[#070b13] border border-[#1b283f] rounded-xl p-0.5 shadow-inner">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(index, -1)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white active:bg-slate-800 transition cursor-pointer"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={item.quantity}
+                            onChange={(e) => handleQuantityChange(index, e.target.value)}
+                            onBlur={() => handleQuantityBlur(index)}
+                            className="w-12 text-center font-bold text-white text-xs font-mono bg-transparent outline-hidden select-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(index, 1)}
+                            disabled={typeof item.stock_quantity === 'number' && (item.stock_quantity <= 0 || Number(item.quantity) >= item.stock_quantity)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-cyan-400 hover:text-cyan-200 active:bg-slate-800 transition cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <div className="text-right font-mono">
+                          <span className="text-[10px] text-slate-400 block">
+                            @{currency}{item.unit_price.toFixed(2)}
+                          </span>
+                          <span className="font-extrabold text-cyan-400 text-sm">
+                            {currency}{item.subtotal.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
             )}
           </div>
 
           {/* DOCK BAR AT THE BOTTOM OF THE CARD */}
-          <div className="px-5 py-2.5 bg-[#090e18] border-t border-[#162135] flex items-center justify-between text-xs text-slate-400 shrink-0 font-mono">
-            <div className="flex items-center gap-3 md:gap-4">
-              <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+          <div className="px-3 sm:px-5 py-2 sm:py-2.5 bg-[#090e18] border-t border-[#162135] flex items-center justify-between text-xs text-slate-400 shrink-0 font-mono">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="flex items-center gap-1.5 text-emerald-400 font-semibold text-[11px] sm:text-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Scanner Ready
+                Ready
               </span>
               <span className="text-slate-600 hidden sm:inline">•</span>
-              <span className="text-slate-400 hidden sm:inline">
+              <span className="text-slate-400 text-[11px] sm:text-xs">
                 Cashier: <strong className="text-slate-200">{currentUser?.username || 'cashier1'}</strong>
               </span>
               <span className="text-slate-600 hidden md:inline">•</span>
-              <span className="text-slate-400 hidden md:inline">
+              <span className="text-slate-400 hidden md:inline text-[11px] sm:text-xs">
                 Register: <strong className="text-slate-200">#01</strong>
               </span>
             </div>
 
-            <div className="flex items-center gap-2 md:gap-3 text-[11px] text-slate-400">
+            <div className="hidden md:flex items-center gap-2 md:gap-3 text-[11px] text-slate-400">
               <span><kbd className="bg-[#121c2e] text-cyan-400 px-1.5 py-0.5 rounded border border-[#1d2d46]">F2</kbd> Search</span>
               <span><kbd className="bg-[#121c2e] text-cyan-400 px-1.5 py-0.5 rounded border border-[#1d2d46]">F4</kbd> Cash</span>
               <span><kbd className="bg-[#121c2e] text-cyan-400 px-1.5 py-0.5 rounded border border-[#1d2d46]">F5</kbd> Card</span>
@@ -910,319 +1317,80 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* RIGHT COLUMN: Order Summary Sidebar (Fixed 100% Height)                   */}
+      {/* RIGHT COLUMN: Desktop Order Summary Sidebar (Fixed on lg and larger)      */}
       {/* ========================================================================= */}
-      <div className="w-80 lg:w-96 bg-[#070b13] border-l border-[#162135] flex flex-col p-6 select-none shrink-0 h-full min-h-0">
-        <h3 className="text-base md:text-lg font-bold text-white tracking-tight mb-4 shrink-0">
-          Order Summary
-        </h3>
+      <div className="hidden lg:flex w-80 lg:w-96 bg-[#070b13] border-l border-[#162135] flex-col p-6 select-none shrink-0 h-full min-h-0">
+        {renderOrderSummaryContent(false)}
+      </div>
 
-        {/* Customer & Loyalty Program Card */}
-        <div className="mb-4 p-3 rounded-xl bg-[#0a101d] border border-[#16233b] shrink-0">
-          {!attachedCustomer ? (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-cyan-400" />
-                  Customer Loyalty
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsQuickCustomerModalOpen(true)}
-                  className="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 hover:underline cursor-pointer"
-                >
-                  <UserPlus className="w-3 h-3" />
-                  + Register
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="text"
-                  placeholder="Customer Phone / Mobile..."
-                  value={customerPhoneInput}
-                  onChange={(e) => {
-                    setCustomerPhoneInput(e.target.value);
-                    if (customerSearchNotFound) setCustomerSearchNotFound(false);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleCustomerLookup();
-                    }
-                  }}
-                  className="flex-1 min-w-0 bg-[#0c1322] border border-[#1d2b42] text-xs text-white px-2.5 py-1.5 rounded-lg outline-hidden focus:border-cyan-500 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleCustomerLookup()}
-                  disabled={isCustomerSearching || !customerPhoneInput.trim()}
-                  className="px-2.5 py-1.5 bg-[#16233b] hover:bg-cyan-600 disabled:opacity-40 text-slate-200 hover:text-white rounded-lg text-xs font-semibold transition cursor-pointer shrink-0"
-                >
-                  {isCustomerSearching ? '...' : 'Find'}
-                </button>
-              </div>
-
-              {customerSearchNotFound && (
-                <div className="mt-2 p-2 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-center justify-between text-[11px] text-rose-300 animate-in fade-in">
-                  <span>Customer not found</span>
-                  <button
-                    type="button"
-                    onClick={() => setIsQuickCustomerModalOpen(true)}
-                    className="text-cyan-400 hover:underline font-bold cursor-pointer"
-                  >
-                    + Register Now
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center shrink-0">
-                    <UserCheck className="w-4 h-4 text-cyan-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-white truncate">{attachedCustomer.name}</div>
-                    <div className="text-[11px] text-slate-400 font-mono">{attachedCustomer.phone}</div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAttachedCustomer(null);
-                    setPointsToRedeem(0);
-                    setCustomerPhoneInput('');
-                    setCustomerSearchNotFound(false);
-                  }}
-                  className="text-slate-500 hover:text-rose-400 text-xs px-1.5 py-0.5 rounded cursor-pointer"
-                  title="Detach customer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Points status */}
-              <div className="pt-2 border-t border-[#16233b] flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1 text-amber-400 font-bold">
-                  <Star className="w-3.5 h-3.5 fill-amber-400" />
-                  {attachedCustomer.points} pts
-                </span>
-                <span className="text-[11px] text-slate-400">
-                  Valued: <strong className="text-slate-300 font-mono">{currency}{(attachedCustomer.points * loyaltyPointValue).toFixed(2)}</strong>
-                </span>
-              </div>
-
-              {/* Points Redemption Control */}
-              {attachedCustomer.points > 0 && isLoyaltyEnabled && (
-                <div className="pt-1.5 flex items-center justify-between text-xs">
-                  <span className="text-slate-400 text-[11px]">Redeem Points:</span>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      min="0"
-                      max={attachedCustomer.points}
-                      value={pointsToRedeem || ''}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        const maxRedeemable = Math.min(
-                          attachedCustomer.points,
-                          Math.floor(subtotal / loyaltyPointValue)
-                        );
-                        setPointsToRedeem(Math.max(0, Math.min(val, maxRedeemable)));
-                      }}
-                      placeholder="0"
-                      className="w-16 bg-[#0c1322] border border-[#1b283f] text-right px-2 py-0.5 text-xs text-amber-300 font-mono rounded-lg outline-hidden focus:border-cyan-500"
-                    />
-                    {pointsToRedeem > 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => setPointsToRedeem(0)}
-                        className="text-slate-500 hover:text-rose-400 text-xs px-1 cursor-pointer"
-                        title="Clear redemption"
-                      >
-                        ✕
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const maxRedeemable = Math.min(
-                            attachedCustomer.points,
-                            Math.floor(subtotal / loyaltyPointValue)
-                          );
-                          setPointsToRedeem(maxRedeemable);
-                        }}
-                        className="text-[10px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-1.5 py-0.5 rounded font-bold transition cursor-pointer"
-                      >
-                        Max
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Summary Breakdown Metrics */}
-        <div className="space-y-3.5 text-xs md:text-sm">
-          <div className="flex items-center justify-between text-slate-400">
-            <span>Total Line Items:</span>
-            <span className="font-bold text-white font-mono">{cart.length}</span>
-          </div>
-
-          <div className="flex items-center justify-between text-slate-400">
-            <span>Total Units / Quantity:</span>
-            <span className="font-bold text-white font-mono">{formattedItemCount}</span>
-          </div>
-
-          <div className="flex items-center justify-between text-slate-400">
-            <span>Subtotal:</span>
-            <span className="font-bold text-white font-mono text-sm md:text-base">
-              {currency}{subtotal.toFixed(2)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Tax Mode:</span>
-            <span className="text-slate-400 font-mono">
-              {isTaxEnabled ? `Standard (${taxRate}%)` : 'Tax-Free / Direct Total'}
-            </span>
-          </div>
-
-          {isTaxEnabled && (
-            <div className="flex items-center justify-between text-slate-400 text-xs">
-              <span>Tax Amount:</span>
-              <span className="text-slate-300 font-mono">{currency}{taxAmount.toFixed(2)}</span>
-            </div>
-          )}
-
-          {/* Points Discount row */}
-          {pointsDiscount > 0 && (
-            <div className="flex items-center justify-between text-xs text-amber-400">
-              <span className="flex items-center gap-1">
-                <Star className="w-3.5 h-3.5 fill-amber-400" />
-                Loyalty Discount ({pointsToRedeem} pts):
-              </span>
-              <span className="font-mono font-bold">- {currency}{pointsDiscount.toFixed(2)}</span>
-            </div>
-          )}
-
-          {/* Optional Discounts Widget */}
-          {isDiscountsEnabled && (
-            <div className="pt-2 border-t border-[#162135]">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400 text-xs">Discount:</span>
-                <div className="flex items-center gap-1">
-                  <span className="text-slate-500 text-xs font-mono">- {currency}</span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={discountAmount || ''}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0;
-                      const threshold = parseFloat(settings?.discount_supervisor_threshold || '250');
-                      if (val > threshold && currentUser?.role !== 'admin' && currentUser?.role !== 'supervisor') {
-                        setPendingSupervisorAction({
-                          desc: `Approve custom discount of ${currency}${val.toFixed(2)}`,
-                          callback: () => setDiscountAmount(val),
-                        });
-                        setIsSupervisorModalOpen(true);
-                      } else {
-                        setDiscountAmount(val);
-                      }
-                    }}
-                    placeholder="0.00"
-                    className="w-20 bg-[#0c1322] border border-[#1b283f] text-right px-2 py-0.5 text-xs text-amber-300 font-mono rounded-lg outline-hidden focus:border-cyan-500"
-                  />
-                  {discountAmount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setDiscountAmount(0)}
-                      className="text-slate-500 hover:text-rose-400 text-xs px-1 cursor-pointer"
-                      title="Clear discount"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Big Total Row */}
-        <div className="pt-6 pb-4 border-t border-[#162135] mt-4 flex items-baseline justify-between shrink-0">
-          <span className="text-xl md:text-2xl font-extrabold text-white">Total:</span>
-          <span className="text-2xl md:text-3xl font-black text-cyan-400 font-mono tracking-tight">
+      {/* ========================================================================= */}
+      {/* MOBILE STICKY BOTTOM CHECKOUT BAR (Shown on screens < lg)                 */}
+      {/* ========================================================================= */}
+      <div className="lg:hidden shrink-0 bg-[#090e18] border-t border-[#162135] px-3.5 py-2.5 flex items-center justify-between shadow-2xl z-20">
+        <div 
+          onClick={() => setIsMobileSummaryOpen(true)}
+          className="cursor-pointer min-w-0"
+        >
+          <span className="text-[10px] text-slate-400 block font-medium">
+            {cart.length} items ({formattedItemCount} units)
+          </span>
+          <span className="text-base font-black text-cyan-400 font-mono">
             {currency}{totalDue.toFixed(2)}
           </span>
         </div>
 
-        {/* Live Customer Savings Banner (Sinhala: ඔබ ලැබූ ලාභය) */}
-        {totalCustomerSavings > 0 && (
-          <div className="p-3 rounded-xl bg-emerald-950/70 border border-emerald-500/50 flex items-center justify-between shadow-lg shrink-0 animate-in fade-in">
-            <div>
-              <span className="font-extrabold text-xs text-emerald-300 block font-sans">ඔබ ලැබූ ලාභය</span>
-              <span className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider">Customer Total Savings</span>
-            </div>
-            <span className="text-base font-black text-emerald-300 font-mono">
-              {currency}{totalCustomerSavings.toFixed(2)}
-            </span>
-          </div>
-        )}
-
-        {/* Spacer */}
-        <div className="flex-1 min-h-0" />
-
-        {/* Bottom Actions (Pinned firmly at the bottom of the sidebar) */}
-        <div className="space-y-3 pt-4 shrink-0">
-          {/* Recall Held Carts (if any exist) */}
-          {heldCarts.length > 0 && (
-            <button
-              type="button"
-              onClick={() => handleRecallCart(0)}
-              className="w-full py-2.5 px-4 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer"
-            >
-              <PlayCircle className="w-4 h-4" />
-              <span>Recall Held Cart ({heldCarts.length}) [F1]</span>
-            </button>
-          )}
-
-          {/* Hold Cart Button (F8) */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            onClick={handleHoldCart}
-            disabled={cart.length === 0}
-            className="w-full py-3.5 px-4 bg-[#121a28] hover:bg-[#182337] disabled:opacity-30 disabled:cursor-not-allowed border border-[#1e2a40] text-slate-200 font-bold rounded-2xl flex items-center justify-center gap-2 text-sm transition cursor-pointer"
+            onClick={() => setIsMobileSummaryOpen(true)}
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 transition cursor-pointer"
           >
-            <PauseCircle className="w-4 h-4 text-slate-400" />
-            <span>Hold Cart</span>
-            <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-400 font-mono text-[10px]">
-              F8
-            </span>
+            Summary
           </button>
-
-          {/* Proceed to Pay Button (F4) */}
           <button
             type="button"
             onClick={() => {
               if (cart.length > 0) setIsCashModalOpen(true);
             }}
             disabled={cart.length === 0}
-            className="w-full py-3.5 px-4 bg-[#00d2df] hover:bg-[#15e1ee] disabled:opacity-30 disabled:cursor-not-allowed text-slate-950 font-black rounded-2xl flex items-center justify-center gap-2 text-base shadow-xl shadow-cyan-500/25 transition cursor-pointer active:scale-98"
+            className="px-4 py-2 bg-[#00d2df] hover:bg-[#15e1ee] disabled:opacity-30 disabled:cursor-not-allowed text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 shadow-lg shadow-cyan-500/20 active:scale-95 transition cursor-pointer"
           >
-            <CreditCard className="w-5 h-5" />
-            <span>Proceed to Pay</span>
-            <span className="px-2 py-0.5 rounded bg-slate-950/20 text-slate-950 font-mono text-xs font-bold">
-              F4
-            </span>
+            <CreditCard className="w-4 h-4" />
+            <span>Pay</span>
           </button>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* MOBILE SUMMARY BOTTOM SHEET MODAL (Slides up when toggled)                */}
+      {/* ========================================================================= */}
+      {isMobileSummaryOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end bg-black/80 backdrop-blur-xs animate-in fade-in">
+          <div 
+            className="flex-1"
+            onClick={() => setIsMobileSummaryOpen(false)}
+          />
+          <div className="bg-[#0b101b] border-t border-[#162135] rounded-t-3xl max-h-[85vh] flex flex-col p-4 sm:p-5 overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-[#162135] shrink-0 mb-3">
+              <h3 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-cyan-400" />
+                <span>Order Summary & Checkout</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsMobileSummaryOpen(false)}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-1">
+              {renderOrderSummaryContent(true)}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* MODALS & OVERLAYS                                                         */}

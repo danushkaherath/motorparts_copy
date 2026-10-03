@@ -56,7 +56,7 @@ export const WipeCatalogModal: React.FC<WipeCatalogModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-xs flex items-center justify-center z-50 p-4 select-none animate-in fade-in duration-150">
-      <div className="bg-slate-900 border border-rose-900/60 rounded-2xl max-w-md w-full p-6 shadow-2xl shadow-rose-950/50 animate-in zoom-in-95 duration-200">
+      <div className="bg-slate-900 border border-rose-900/60 rounded-2xl max-w-md w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl shadow-rose-950/50 animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-2.5 text-rose-400 font-bold text-base">

@@ -222,8 +222,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const totalVisits = (customers || []).reduce((acc, c) => acc + (Number(c.visits_count) || 0), 0);
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-53px)] bg-slate-950 p-6 overflow-y-auto select-none">
-      <div className="max-w-7xl mx-auto w-full space-y-6 pb-12">
+    <div className="flex-1 flex flex-col h-full min-h-0 bg-slate-950 p-3 sm:p-6 overflow-y-auto select-none">
+      <div className="max-w-7xl mx-auto w-full space-y-4 sm:space-y-6 pb-12">
         
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
@@ -327,7 +327,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         {/* Customers Table */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-inner">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[700px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
                   <th className="py-3 px-4">Customer Name & Contact</th>
@@ -437,7 +437,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       {/* Add / Edit Customer Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-750 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+          <div className="bg-slate-900 border border-slate-750 rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
             <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between shrink-0 bg-slate-950/40">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <Users className="w-5 h-5 text-pink-400" />
@@ -452,12 +452,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             </div>
 
             {formError && (
-              <div className="mx-6 mt-4 p-2.5 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs text-center">
+              <div className="mx-6 mt-4 p-2.5 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs text-center shrink-0">
                 {formError}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
@@ -652,7 +652,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       {/* Admin Loyalty Program Rules Modal */}
       {isRulesModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-[90] p-4 select-none">
-          <div className="bg-slate-900 border border-slate-750 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+          <div className="bg-slate-900 border border-slate-750 rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
             <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between shrink-0 bg-slate-950/40">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
@@ -677,12 +677,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             </div>
 
             {rulesSuccessMsg && (
-              <div className="mx-6 mt-4 p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 text-xs text-center font-bold">
+              <div className="mx-6 mt-4 p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 text-xs text-center font-bold shrink-0">
                 {rulesSuccessMsg}
               </div>
             )}
 
-            <form onSubmit={handleSaveRules} className="p-6 space-y-4">
+            <form onSubmit={handleSaveRules} className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Program Status Toggle */}
               <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center justify-between">
                 <div>

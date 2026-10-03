@@ -206,10 +206,10 @@ export const StaffManagement: React.FC<StaffManagementProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-53px)] bg-slate-950 p-6 overflow-y-auto">
-      <div className="max-w-6xl mx-auto w-full space-y-6 pb-12">
+    <div className="flex-1 flex flex-col h-full min-h-0 bg-slate-950 p-3 sm:p-6 overflow-y-auto">
+      <div className="max-w-6xl mx-auto w-full space-y-4 sm:space-y-6 pb-12">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <Users className="w-5 h-5 text-indigo-400" />
@@ -222,7 +222,7 @@ export const StaffManagement: React.FC<StaffManagementProps> = ({
 
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-950/40 cursor-pointer"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-950/40 cursor-pointer w-full sm:w-auto"
           >
             <UserPlus className="w-4 h-4" />
             <span>Create New User</span>
@@ -300,7 +300,7 @@ export const StaffManagement: React.FC<StaffManagementProps> = ({
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300 border-collapse">
+            <table className="w-full min-w-[700px] text-left text-xs text-slate-300 border-collapse">
               <thead className="bg-slate-850 border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px] tracking-wider">
                 <tr>
                   <th className="py-3 px-4">User</th>

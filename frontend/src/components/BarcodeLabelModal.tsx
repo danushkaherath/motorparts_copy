@@ -783,11 +783,11 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               Target Printer: <strong className="text-slate-200">{settings?.printer_name || 'Xprinter XP-365B'}</strong> ({totalLabels} total sticker{totalLabels === 1 ? '' : 's'})
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition cursor-pointer"
+                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition cursor-pointer text-center"
               >
                 Cancel
               </button>
@@ -795,17 +795,17 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               <button
                 type="button"
                 onClick={handleBrowserPrint}
-                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Printer className="w-4 h-4 text-slate-400" />
-                <span>Browser Print (Ctrl+P)</span>
+                <span>Browser Print</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleDirectThermalPrint}
                 disabled={isPrinting}
-                className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-extrabold text-slate-950 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-amber-950/50"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-extrabold text-slate-950 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-amber-950/50"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>{isPrinting ? 'Printing Labels...' : `Print to XP-365B (${totalLabels})`}</span>

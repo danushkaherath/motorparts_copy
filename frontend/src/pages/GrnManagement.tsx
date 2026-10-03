@@ -741,19 +741,19 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
   return (
     <div className="flex-1 flex flex-col h-full bg-[#070b13] text-slate-100 overflow-hidden">
       {/* Top Header Bar */}
-      <header className="px-6 py-4 bg-[#0d1527]/90 border-b border-slate-800/80 flex items-center justify-between shrink-0">
+      <header className="px-3 sm:px-6 py-3 sm:py-4 bg-[#0d1527]/90 border-b border-slate-800/80 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
             <ClipboardCheck className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white tracking-tight">Goods Received Note (GRN)</h1>
-              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-950 text-teal-400 border border-teal-800">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">Goods Received Note (GRN)</h1>
+              <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded-full font-medium bg-teal-950 text-teal-400 border border-teal-800">
                 Goods Inward & Inventory Sync
               </span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 hidden sm:block">
               Receive outside deliveries, sync store stock and multi-batch prices, and print official receiving vouchers.
             </p>
           </div>
@@ -804,12 +804,12 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
       </header>
 
       {/* Tabs Sub-Navigation */}
-      <div className="px-6 border-b border-slate-800 bg-[#0a101f] flex items-center justify-between shrink-0">
+      <div className="px-3 sm:px-6 border-b border-slate-800 bg-[#0a101f] flex items-center justify-between shrink-0 overflow-x-auto">
         <div className="flex items-center gap-2 pt-2">
           <button
             type="button"
             onClick={() => setActiveTab('create')}
-            className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition border-b-2 flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition border-b-2 flex items-center gap-2 cursor-pointer shrink-0 ${
               activeTab === 'create'
                 ? 'border-teal-500 text-teal-400 bg-slate-900/60'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -827,7 +827,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
           <button
             type="button"
             onClick={() => setActiveTab('history')}
-            className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition border-b-2 flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition border-b-2 flex items-center gap-2 cursor-pointer shrink-0 ${
               activeTab === 'history'
                 ? 'border-teal-500 text-teal-400 bg-slate-900/60'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -846,7 +846,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-6">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6">
         {/* System-Triggered Payment Due Notification (Active within 3 days until marked PAID) */}
         {dueReminders.length > 0 && (
           <div className="max-w-7xl mx-auto mb-6 bg-gradient-to-r from-amber-950/50 via-slate-900 to-amber-950/40 border border-amber-500/40 rounded-2xl p-4 text-amber-200 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
@@ -1313,7 +1313,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                 </div>
               ) : (
                 <div className="overflow-x-auto border border-slate-800 rounded-xl">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full min-w-[850px] text-left text-xs">
                     <thead className="bg-[#0f172a] text-slate-400 border-b border-slate-800 font-semibold uppercase tracking-wider text-[10px]">
                       <tr>
                         <th className="py-3 px-3 w-8">#</th>
@@ -1455,7 +1455,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
               {/* Bottom Summary Bar */}
               {draftItems.length > 0 && (
                 <div className="pt-4 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-6 text-xs text-slate-400">
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-slate-400">
                     <div>
                       Distinct Items: <strong className="text-white font-mono">{draftItems.length}</strong>
                     </div>
@@ -1476,7 +1476,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
                     <button
                       type="button"
                       onClick={clearDraft}
@@ -1584,7 +1584,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
             {/* GRN List Table */}
             <div className="bg-[#0b1322] border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full min-w-[850px] text-left text-xs">
                   <thead className="bg-[#0f172a] text-slate-400 border-b border-slate-800 font-semibold uppercase tracking-wider text-[10px]">
                     <tr>
                       <th className="py-3 px-4">GRN Number & Date</th>

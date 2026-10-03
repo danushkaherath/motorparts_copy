@@ -53,7 +53,7 @@ export const SubstitutesModal: React.FC<SubstitutesModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center z-50 p-4 select-none">
-      <div className="bg-[#0b101b] border border-[#1b283f] rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+      <div className="bg-[#0b101b] border border-[#1b283f] rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#162135] bg-[#090e18]">
           <div className="flex items-center gap-2.5">

@@ -13,11 +13,13 @@ import { CustomerManagement } from './pages/CustomerManagement';
 import { ShiftModal } from './components/ShiftModal';
 import { LockScreenModal } from './components/LockScreenModal';
 import { SubscriptionLockOverlay } from './components/SubscriptionLockOverlay';
+import { Menu, ShoppingBag, ShoppingCart, BookOpen, Package, BarChart3, Lock } from 'lucide-react';
 import type { AppSettings, Shift, AppModule } from './types';
 import { api } from './services/api';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<AppModule>('pos');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(() => {
@@ -167,8 +169,44 @@ export function App() {
   }, [currentUser, activeTab]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#070b13] text-slate-100 flex flex-row font-sans selection:bg-emerald-500 selection:text-black">
-      {/* Left Vertical Sidebar */}
+    <div className="h-screen w-screen overflow-hidden bg-[#070b13] text-slate-100 flex flex-col md:flex-row font-sans selection:bg-emerald-500 selection:text-black">
+      {/* Mobile Top Header (Hidden on md and larger) */}
+      <header className="md:hidden flex items-center justify-between px-3.5 py-2.5 bg-[#090e18] border-b border-[#162135] shrink-0 z-30 select-none">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 active:scale-95 transition cursor-pointer"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+              <ShoppingBag className="w-4 h-4" />
+            </div>
+            <span className="font-extrabold text-white text-sm tracking-tight truncate max-w-[150px] sm:max-w-[220px]">
+              {settings?.store_name || 'FreshMart POS'}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-bold uppercase">
+            {currentUser?.username || 'cashier'}
+          </span>
+          <button
+            type="button"
+            onClick={handleLock}
+            title="Lock Register (F9)"
+            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-amber-400 border border-slate-700 active:scale-95 transition cursor-pointer"
+          >
+            <Lock className="w-4 h-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* Navigation Sidebar (Desktop + Mobile Drawer) */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={(tab) => {
@@ -182,6 +220,8 @@ export function App() {
         onOpenXReport={handleOpenXReport}
         onLock={handleLock}
         onLogout={handleLogout}
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
 
       {/* Main Screen Content */}
@@ -262,6 +302,62 @@ export function App() {
           />
         )}
       </main>
+
+      {/* Mobile Bottom Navigation Bar (Hidden on md and larger) */}
+      <nav className="md:hidden flex items-center justify-around bg-[#090e18] border-t border-[#162135] py-1.5 px-2 shrink-0 z-30 select-none">
+        <button
+          type="button"
+          onClick={() => setActiveTab('pos')}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
+            activeTab === 'pos' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <ShoppingCart className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">POS</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('catalog')}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
+            activeTab === 'catalog' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <BookOpen className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Catalog</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('inventory')}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
+            activeTab === 'inventory' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Package className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Stock</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('reports')}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
+            activeTab === 'reports' ? 'text-teal-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Reports</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-400 hover:text-slate-200 transition cursor-pointer"
+        >
+          <Menu className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">More</span>
+        </button>
+      </nav>
 
       {/* Shared Shift Modal (Start / X-Report / Z-Report) */}
       <ShiftModal

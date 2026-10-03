@@ -219,12 +219,12 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-53px)] bg-slate-950 p-6 overflow-hidden select-none">
+    <div className="flex-1 flex flex-col h-full min-h-0 bg-slate-950 p-3 sm:p-6 overflow-hidden select-none">
       {/* Header & Master Actions */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-slate-800 shrink-0">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-blue-400" />
+          <h1 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-blue-400 shrink-0" />
             <span>Product Master Catalog</span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
@@ -232,7 +232,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isAdmin && (
             <button
               onClick={() => setIsWipeModalOpen(true)}
@@ -286,8 +286,8 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
       )}
 
       {/* Filter Bar */}
-      <div className="flex items-center gap-3 py-4 shrink-0">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 py-3 sm:py-4 shrink-0">
+        <div className="relative flex-1 w-full max-w-full sm:max-w-md">
           <input
             type="text"
             value={search}
@@ -298,44 +298,46 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
 
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="bg-slate-900 border border-slate-750 text-xs text-slate-200 rounded-xl py-2 px-3 outline-hidden focus:border-blue-400"
-        >
-          <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="bg-slate-900 border border-slate-750 text-xs text-slate-200 rounded-xl py-2 px-3 outline-hidden focus:border-blue-400 flex-1 sm:flex-none"
+          >
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
 
-        <select
-          value={filterStockStatus}
-          onChange={(e) => setFilterStockStatus(e.target.value as any)}
-          className="bg-slate-900 border border-slate-750 text-xs text-slate-200 rounded-xl py-2 px-3 outline-hidden focus:border-blue-400 font-medium"
-        >
-          <option value="all">All Catalog Items</option>
-          <option value="stocked">Stocked in Store Inventory</option>
-          <option value="catalog_only">Catalog Only (Not Stocked)</option>
-        </select>
+          <select
+            value={filterStockStatus}
+            onChange={(e) => setFilterStockStatus(e.target.value as any)}
+            className="bg-slate-900 border border-slate-750 text-xs text-slate-200 rounded-xl py-2 px-3 outline-hidden focus:border-blue-400 font-medium flex-1 sm:flex-none"
+          >
+            <option value="all">All Catalog Items</option>
+            <option value="stocked">Stocked in Store Inventory</option>
+            <option value="catalog_only">Catalog Only (Not Stocked)</option>
+          </select>
 
-        <select
-          value={pageSize}
-          onChange={(e) => setPageSize(Number(e.target.value))}
-          className="bg-slate-900 border border-slate-750 text-xs text-slate-200 rounded-xl py-2 px-3 outline-hidden focus:border-blue-400"
-        >
-          <option value={50}>50 / page</option>
-          <option value={100}>100 / page</option>
-          <option value={200}>200 / page</option>
-        </select>
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="bg-slate-900 border border-slate-750 text-xs text-slate-200 rounded-xl py-2 px-3 outline-hidden focus:border-blue-400"
+          >
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+            <option value={200}>200 / page</option>
+          </select>
+        </div>
       </div>
 
       {/* Catalog Table */}
       <div className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col">
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full min-w-[650px] text-left border-collapse text-xs">
             <thead className="bg-slate-950/80 text-slate-400 sticky top-0 z-10 border-b border-slate-800 select-none">
               <tr>
                 <th className="py-3 px-4 font-semibold">Barcode / SKU</th>

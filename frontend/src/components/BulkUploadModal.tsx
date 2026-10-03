@@ -221,15 +221,15 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
           </div>
 
           {/* Quick Load Sample Dataset Button */}
-          <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-slate-950 p-3 rounded-xl border border-slate-800">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
+              <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
               <span className="text-xs text-slate-300 font-medium">Want to test with the Sri Lankan retail catalog?</span>
             </div>
             <button
               type="button"
               onClick={handleLoadSampleDataset}
-              className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-bold transition cursor-pointer"
+              className="w-full sm:w-auto text-center px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-bold transition cursor-pointer"
             >
               Load Sample Attached Dataset (1000+ Products)
             </button>
@@ -245,8 +245,8 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                 <span className="text-[11px] text-slate-400">Showing first 5 rows</span>
               </div>
 
-              <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
-                <table className="w-full text-left text-[11px] text-slate-300">
+              <div className="border border-slate-800 rounded-xl overflow-x-auto bg-slate-950">
+                <table className="w-full min-w-[500px] text-left text-[11px] text-slate-300">
                   <thead className="bg-slate-850 border-b border-slate-800 text-slate-400 font-semibold uppercase">
                     <tr>
                       <th className="py-2 px-3">Product Name</th>

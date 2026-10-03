@@ -340,12 +340,12 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-53px)] bg-slate-950 p-6 overflow-hidden select-none">
+    <div className="flex-1 flex flex-col h-full min-h-0 bg-slate-950 p-3 sm:p-6 overflow-hidden select-none">
       {/* Header & Controls */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-slate-800 shrink-0">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Package className="w-5 h-5 text-amber-400" />
+          <h1 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <Package className="w-5 h-5 text-amber-400 shrink-0" />
             <span>Store Inventory & Physical Stock</span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
@@ -353,7 +353,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isAdmin && (
             <button
               onClick={() => setIsResetModalOpen(true)}
@@ -453,8 +453,8 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
       </div>
 
       {/* Filter Bar */}
-      <div className="flex items-center gap-3 pb-3 shrink-0">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-wrap items-center gap-2.5 pb-3 shrink-0">
+        <div className="relative flex-1 min-w-[220px] sm:max-w-md">
           <input
             type="text"
             value={search}
@@ -516,7 +516,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
       {/* Inventory Table */}
       <div className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col">
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full min-w-[800px] text-left border-collapse text-xs">
             <thead className="bg-slate-950/80 text-slate-400 sticky top-0 z-10 border-b border-slate-800 select-none">
               <tr>
                 <th className="py-3 px-4 font-semibold">Barcode / SKU</th>
@@ -687,7 +687,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
         </div>
 
         {/* Pagination Footer */}
-        <div className="p-3 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between text-xs text-slate-400 shrink-0">
+        <div className="p-3 border-t border-slate-800 bg-slate-950/60 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 shrink-0">
           <div>
             Showing {(currentPage - 1) * pageSize + (products.length ? 1 : 0)} to{' '}
             {Math.min(currentPage * pageSize, totalProducts)} of {totalProducts.toLocaleString()} items
@@ -717,7 +717,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
       {/* Stock Adjustment Modal */}
       {isAdjustModalOpen && selectedProduct && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-750 rounded-3xl max-w-md w-full p-6 shadow-2xl animate-in fade-in zoom-in-95">
+          <div className="bg-slate-900 border border-slate-750 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <div>
                 <h2 className="text-sm font-bold text-white flex items-center gap-2">

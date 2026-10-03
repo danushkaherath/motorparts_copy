@@ -208,7 +208,7 @@ export const RecentBillsModal: React.FC<RecentBillsModalProps> = ({
         </div>
 
         {/* Orders Table */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-6 pb-4 sm:pb-6">
           {orders.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-2 py-12">
               <Receipt className="w-10 h-10 text-slate-600" />
@@ -216,8 +216,8 @@ export const RecentBillsModal: React.FC<RecentBillsModalProps> = ({
               <p className="text-xs text-slate-600">Try adjusting your search criteria</p>
             </div>
           ) : (
-            <div className="bg-[#090e18] border border-[#162135] rounded-2xl overflow-hidden shadow-lg">
-              <table className="w-full text-left border-collapse">
+            <div className="bg-[#090e18] border border-[#162135] rounded-2xl overflow-hidden shadow-lg overflow-x-auto">
+              <table className="w-full min-w-[700px] text-left border-collapse">
                 <thead>
                   <tr className="bg-[#0e1626] border-b border-[#162135] text-slate-400 text-[11px] uppercase font-bold tracking-wider">
                     <th className="py-3 px-4">BILL NUMBER</th>

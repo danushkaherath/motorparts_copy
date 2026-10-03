@@ -133,11 +133,11 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 border border-slate-750 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-slate-900 border border-slate-750 rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-850">
-          <div className="flex items-center gap-2.5 text-purple-400 font-bold text-lg">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800 bg-slate-850 shrink-0">
+          <div className="flex items-center gap-2.5 text-purple-400 font-bold text-base sm:text-lg">
             <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
               <Clock className="w-5 h-5" />
             </div>
@@ -157,13 +157,13 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-rose-950/50 border border-rose-800/80 text-rose-300 text-xs flex items-center gap-2">
+          <div className="mx-4 sm:mx-6 mt-4 p-3 rounded-lg bg-rose-950/50 border border-rose-800/80 text-rose-300 text-xs flex items-center gap-2 shrink-0">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {/* 1. START SHIFT FORM */}
           {mode === 'start' && (
             <form onSubmit={handleStartShift} className="space-y-4">

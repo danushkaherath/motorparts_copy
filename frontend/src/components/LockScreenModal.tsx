@@ -89,7 +89,7 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
 
   return (
     <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-4 select-none">
-      <div className="bg-slate-900 border border-slate-750 rounded-3xl max-w-sm w-full p-7 shadow-2xl flex flex-col items-center animate-in fade-in zoom-in-95">
+      <div className="bg-slate-900 border border-slate-750 rounded-3xl max-w-sm w-full max-h-[96vh] overflow-y-auto p-5 sm:p-7 shadow-2xl flex flex-col items-center animate-in fade-in zoom-in-95">
         <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mb-3 shadow-lg shadow-emerald-950/50">
           <Lock className="w-7 h-7" />
         </div>

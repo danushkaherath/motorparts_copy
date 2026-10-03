@@ -63,7 +63,7 @@ export const QuickCustomerModal: React.FC<QuickCustomerModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-60 p-4">
-      <div className="bg-[#0e1626] border border-cyan-500/40 rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+      <div className="bg-[#0e1626] border border-cyan-500/40 rounded-2xl max-w-sm w-full max-h-[92vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="px-5 py-3.5 bg-[#090f1a] border-b border-[#1b283f] flex items-center justify-between">
           <div className="flex items-center gap-2 text-cyan-400">

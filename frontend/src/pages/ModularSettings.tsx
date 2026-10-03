@@ -181,8 +181,8 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
 
   if (!hasSettingsAccess) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center h-[calc(100vh-53px)] bg-slate-950 p-6 select-none">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center space-y-4 animate-in fade-in zoom-in-95">
+      <div className="flex-1 flex flex-col items-center justify-center h-full min-h-0 bg-slate-950 p-3 sm:p-6 select-none">
+        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center space-y-4 animate-in fade-in zoom-in-95">
           <div className="w-16 h-16 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shadow-lg shadow-rose-950/40">
             <Lock className="w-8 h-8" />
           </div>
@@ -221,10 +221,10 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-53px)] bg-slate-950 p-6 overflow-y-auto">
-      <div className="max-w-4xl mx-auto w-full space-y-8 pb-12">
+    <div className="flex-1 flex flex-col h-full min-h-0 bg-slate-950 p-3 sm:p-6 overflow-y-auto">
+      <div className="max-w-4xl mx-auto w-full space-y-6 sm:space-y-8 pb-12">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <Settings className="w-5 h-5 text-slate-400" />

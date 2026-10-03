@@ -152,8 +152,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
   const cashPercent = Math.round((Number(summary.cash_revenue || 0) / totalTender) * 100);
   const cardPercent = 100 - cashPercent;
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-950 p-6 overflow-y-auto">
-      <div className="max-w-7xl mx-auto w-full space-y-6 pb-16">
+    <div className="flex-1 flex flex-col h-full bg-slate-950 p-3 sm:p-6 overflow-y-auto">
+      <div className="max-w-7xl mx-auto w-full space-y-4 sm:space-y-6 pb-16">
         {/* Top Header & Export Actions */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
@@ -610,7 +610,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
           {/* Tab 1: Most Profitable Items Table */}
           {productTab === 'profitable' && (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300 border-collapse">
+              <table className="w-full min-w-[750px] text-left text-xs text-slate-300 border-collapse">
                 <thead className="bg-slate-850 border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px]">
                   <tr>
                     <th className="py-3 px-4">Item Name</th>
@@ -675,7 +675,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
           {/* Tab 2: Fast-Moving by Volume Table */}
           {productTab === 'volume' && (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300 border-collapse">
+              <table className="w-full min-w-[650px] text-left text-xs text-slate-300 border-collapse">
                 <thead className="bg-slate-850 border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px]">
                   <tr>
                     <th className="py-3 px-4">Item Name</th>
@@ -715,7 +715,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
           {/* Tab 3: Low Margin Warnings Table */}
           {productTab === 'low_margin' && (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300 border-collapse">
+              <table className="w-full min-w-[750px] text-left text-xs text-slate-300 border-collapse">
                 <thead className="bg-slate-850 border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px]">
                   <tr>
                     <th className="py-3 px-4">Item Name</th>
@@ -821,36 +821,38 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
               </div>
             </div>
 
-            <table className="w-full text-left text-xs text-slate-300 border-collapse">
-              <thead className="bg-slate-850 border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-4">Date</th>
-                  <th className="py-2.5 px-4 text-center">Invoices</th>
-                  <th className="py-2.5 px-4 text-right">Taxable Net</th>
-                  <th className="py-2.5 px-4 text-right">Tax Collected</th>
-                  <th className="py-2.5 px-4 text-right">Gross Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
-                {taxData.daily_breakdown?.length === 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px] text-left text-xs text-slate-300 border-collapse">
+                <thead className="bg-slate-850 border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px]">
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-slate-500 font-sans">
-                      No tax records for this period.
-                    </td>
+                    <th className="py-2.5 px-4">Date</th>
+                    <th className="py-2.5 px-4 text-center">Invoices</th>
+                    <th className="py-2.5 px-4 text-right">Taxable Net</th>
+                    <th className="py-2.5 px-4 text-right">Tax Collected</th>
+                    <th className="py-2.5 px-4 text-right">Gross Total</th>
                   </tr>
-                ) : (
-                  taxData.daily_breakdown?.map((d: any, idx: number) => (
-                    <tr key={idx} className="hover:bg-slate-800/30">
-                      <td className="py-2.5 px-4 font-bold text-white">{d.sale_date}</td>
-                      <td className="py-2.5 px-4 text-center">{d.total_invoices}</td>
-                      <td className="py-2.5 px-4 text-right text-slate-300">{currency}{d.taxable_sales.toFixed(2)}</td>
-                      <td className="py-2.5 px-4 text-right text-cyan-400 font-bold">{currency}{d.tax_collected.toFixed(2)}</td>
-                      <td className="py-2.5 px-4 text-right text-white font-bold">{currency}{d.gross_sales.toFixed(2)}</td>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                  {taxData.daily_breakdown?.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-center text-slate-500 font-sans">
+                        No tax records for this period.
+                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    taxData.daily_breakdown?.map((d: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-slate-800/30">
+                        <td className="py-2.5 px-4 font-bold text-white">{d.sale_date}</td>
+                        <td className="py-2.5 px-4 text-center">{d.total_invoices}</td>
+                        <td className="py-2.5 px-4 text-right text-slate-300">{currency}{d.taxable_sales.toFixed(2)}</td>
+                        <td className="py-2.5 px-4 text-right text-cyan-400 font-bold">{currency}{d.tax_collected.toFixed(2)}</td>
+                        <td className="py-2.5 px-4 text-right text-white font-bold">{currency}{d.gross_sales.toFixed(2)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -861,32 +863,34 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
               <Calendar className="w-4 h-4" />
               <span>Goods Expiring in 30 Days (Urgent Clearance)</span>
             </div>
-            <table className="w-full text-left text-xs text-slate-300 border-collapse">
-              <thead className="bg-slate-850 border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-4">Item Name</th>
-                  <th className="py-2.5 px-4">Barcode</th>
-                  <th className="py-2.5 px-4">Batch #</th>
-                  <th className="py-2.5 px-4">Expiry Date</th>
-                  <th className="py-2.5 px-4 text-center">Remaining Stock</th>
-                  <th className="py-2.5 px-4 text-right">Days Remaining</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 font-sans text-[11px]">
-                {expiryAlerts.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-800/30">
-                    <td className="py-2.5 px-4 font-semibold text-slate-100">{item.name}</td>
-                    <td className="py-2.5 px-4 font-mono text-slate-400">{item.barcode}</td>
-                    <td className="py-2.5 px-4 font-mono text-slate-400">#{item.batch_number || '—'}</td>
-                    <td className="py-2.5 px-4 font-mono text-amber-300">{item.expiry_date}</td>
-                    <td className="py-2.5 px-4 text-center font-mono font-bold text-white">{item.stock_quantity}</td>
-                    <td className="py-2.5 px-4 text-right font-mono font-bold text-rose-400">
-                      {item.days_remaining <= 0 ? 'EXPIRED' : `${item.days_remaining} days`}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[650px] text-left text-xs text-slate-300 border-collapse">
+                <thead className="bg-slate-850 border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px]">
+                  <tr>
+                    <th className="py-2.5 px-4">Item Name</th>
+                    <th className="py-2.5 px-4">Barcode</th>
+                    <th className="py-2.5 px-4">Batch #</th>
+                    <th className="py-2.5 px-4">Expiry Date</th>
+                    <th className="py-2.5 px-4 text-center">Remaining Stock</th>
+                    <th className="py-2.5 px-4 text-right">Days Remaining</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 font-sans text-[11px]">
+                  {expiryAlerts.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-800/30">
+                      <td className="py-2.5 px-4 font-semibold text-slate-100">{item.name}</td>
+                      <td className="py-2.5 px-4 font-mono text-slate-400">{item.barcode}</td>
+                      <td className="py-2.5 px-4 font-mono text-slate-400">#{item.batch_number || '—'}</td>
+                      <td className="py-2.5 px-4 font-mono text-amber-300">{item.expiry_date}</td>
+                      <td className="py-2.5 px-4 text-center font-mono font-bold text-white">{item.stock_quantity}</td>
+                      <td className="py-2.5 px-4 text-right font-mono font-bold text-rose-400">
+                        {item.days_remaining <= 0 ? 'EXPIRED' : `${item.days_remaining} days`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
