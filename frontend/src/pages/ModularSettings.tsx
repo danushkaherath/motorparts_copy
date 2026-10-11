@@ -19,12 +19,15 @@ import {
   PhoneCall,
   Unlock,
   DollarSign,
-  X
+  X,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import type { AppSettings } from '../types';
 import { api } from '../services/api';
 import { WipeCatalogModal } from '../components/WipeCatalogModal';
 import { SupervisorPinModal } from '../components/SupervisorPinModal';
+import { useTheme } from '../context/ThemeContext';
 
 interface ModularSettingsProps {
   settings: AppSettings | null;
@@ -39,6 +42,7 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
   onSettingsUpdated,
   onElevateToAdmin,
 }) => {
+  const { theme, setTheme, isDark } = useTheme();
   const [formData, setFormData] = useState<Partial<AppSettings>>({});
   const [isWipeModalOpen, setIsWipeModalOpen] = useState<boolean>(false);
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState<boolean>(false);
@@ -398,6 +402,95 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
               >
                 <div className="bg-white w-4 h-4 rounded-full shadow-md"></div>
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= APPEARANCE & COLOR THEME SWITCHER ================= */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              {isDark ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                POS Visual Theme & Display Mode
+              </span>
+            </div>
+            <span className="text-[11px] font-mono text-slate-400">
+              Active: <strong className="text-white">{isDark ? 'Dark Midnight Navy' : 'Modern Clean Light'}</strong>
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-400">
+            Switch between dark mode (ideal for low-light auto parts warehouses) and the modern minimalist clean light theme (Apple/Shopify/Square POS style for storefront counters).
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            {/* Dark Theme Card */}
+            <div
+              onClick={() => setTheme('dark')}
+              className={`p-4 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between gap-3 ${
+                isDark
+                  ? 'bg-slate-950 border-cyan-500 shadow-md shadow-cyan-950/40'
+                  : 'bg-slate-950/60 border-slate-850 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <Moon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Midnight Dark (Default)</h4>
+                    <span className="text-[10px] text-slate-400">Low glare, high contrast</span>
+                  </div>
+                </div>
+                {isDark && (
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-[10px]">
+                    Active
+                  </span>
+                )}
+              </div>
+              <div className="h-6 rounded-lg bg-[#070b13] border border-[#1b283f] flex items-center px-2 gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+                <div className="w-12 h-1.5 rounded-full bg-slate-700" />
+                <div className="ml-auto w-6 h-1.5 rounded-full bg-emerald-400" />
+              </div>
+            </div>
+
+            {/* Light Theme Card */}
+            <div
+              onClick={() => setTheme('light')}
+              className={`p-4 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between gap-3 ${
+                !isDark
+                  ? 'bg-white text-slate-900 border-blue-600 shadow-md'
+                  : 'bg-slate-950/60 border-slate-850 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-500">
+                    <Sun className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className={`text-xs font-bold ${!isDark ? 'text-slate-900' : 'text-white'}`}>
+                      Modern Clean Light
+                    </h4>
+                    <span className={`text-[10px] ${!isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                      Shopify / Square POS style
+                    </span>
+                  </div>
+                </div>
+                {!isDark && (
+                  <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px]">
+                    Active
+                  </span>
+                )}
+              </div>
+              <div className="h-6 rounded-lg bg-slate-100 border border-slate-300 flex items-center px-2 gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                <div className="w-12 h-1.5 rounded-full bg-slate-300" />
+                <div className="ml-auto w-6 h-1.5 rounded-full bg-emerald-500" />
+              </div>
             </div>
           </div>
         </div>

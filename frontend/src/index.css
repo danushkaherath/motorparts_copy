@@ -8,10 +8,179 @@
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #0f172a;
+    background-color: #070b13;
     color: #f8fafc;
     overflow-x: hidden;
   }
+}
+
+/* ========================================================================== */
+/* MODERN MINIMALIST CLEAN LIGHT THEME (Shopify / Square POS Style)            */
+/* Activated via .theme-light on root HTML                                    */
+/* Palette:                                                                   */
+/* Background: Soft Off-White (#f8fafc / #f1f5f9)                             */
+/* Cards & Tables: Pure White (#ffffff) with soft borders (#e2e8f0)            */
+/* Text & Typography: Deep Charcoal / Slate 900 (#0f172a / #1e293b)           */
+/* ========================================================================== */
+
+.theme-light body {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Shell & Workspace Backgrounds */
+.theme-light .bg-\[\#070b13\],
+.theme-light .bg-\[\#090e18\],
+.theme-light .bg-slate-950,
+.theme-light .bg-slate-900,
+.theme-light main {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Secondary Panels, Navbars & Cards */
+.theme-light aside,
+.theme-light header,
+.theme-light .bg-\[\#0b101b\],
+.theme-light .bg-\[\#0d1424\],
+.theme-light .bg-\[\#0e1626\],
+.theme-light .bg-\[\#121a28\],
+.theme-light .bg-slate-850 {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Soft Sub-panels & Rows */
+.theme-light .bg-slate-800,
+.theme-light .bg-slate-800\/90,
+.theme-light .bg-slate-800\/80,
+.theme-light .bg-slate-800\/60,
+.theme-light .bg-slate-800\/50,
+.theme-light .bg-slate-800\/40,
+.theme-light .bg-slate-900\/80,
+.theme-light .bg-slate-950\/70,
+.theme-light .bg-slate-950\/60,
+.theme-light .bg-slate-950\/50,
+.theme-light .bg-slate-950\/40,
+.theme-light .bg-\[\#070b13\]\/90,
+.theme-light .bg-\[\#111928\]\/60 {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+/* Borders in Light Mode */
+.theme-light .border-\[\#162135\],
+.theme-light .border-\[\#1b283f\],
+.theme-light .border-\[\#152033\],
+.theme-light .border-\[\#1e2a40\],
+.theme-light .border-\[\#16233b\],
+.theme-light .border-slate-800,
+.theme-light .border-slate-750,
+.theme-light .border-slate-700,
+.theme-light .divide-\[\#152033\],
+.theme-light .divide-\[\#162135\],
+.theme-light .divide-slate-800 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Typography Overrides */
+.theme-light .text-white {
+  color: #0f172a !important;
+}
+.theme-light .text-slate-100,
+.theme-light .text-slate-200 {
+  color: #1e293b !important;
+}
+.theme-light .text-slate-300 {
+  color: #334155 !important;
+}
+.theme-light .text-slate-400 {
+  color: #64748b !important;
+}
+.theme-light .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* High-contrast Table Headers */
+.theme-light thead,
+.theme-light thead tr,
+.theme-light th {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Inputs & Form Fields in Light Mode */
+.theme-light input,
+.theme-light select,
+.theme-light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+.theme-light input::placeholder,
+.theme-light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+.theme-light input:focus,
+.theme-light select:focus,
+.theme-light textarea:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 1px #2563eb !important;
+}
+
+/* Primary Total & Accent Highlights in Light Mode */
+.theme-light .text-cyan-400 {
+  color: #0284c7 !important;
+}
+.theme-light .text-emerald-400 {
+  color: #059669 !important;
+}
+.theme-light .text-amber-400 {
+  color: #d97706 !important;
+}
+.theme-light .text-purple-400 {
+  color: #7c3aed !important;
+}
+.theme-light .text-blue-400 {
+  color: #2563eb !important;
+}
+
+/* Modals in Light Mode */
+.theme-light .bg-slate-900.border.border-slate-750,
+.theme-light .bg-\[\#0b101b\].border.border-\[\#1b283f\] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* POS Proceed to Pay Button in Light Mode (Square/Shopify Classic Emerald) */
+.theme-light .bg-\[\#00d2df\] {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+}
+.theme-light .bg-\[\#00d2df\]:hover {
+  background-color: #059669 !important;
+}
+
+/* Dark Modal Overlay Backdrop */
+.theme-light .bg-black\/80,
+.theme-light .bg-slate-950\/85 {
+  background-color: rgba(15, 23, 42, 0.65) !important;
+}
+
+/* Keyboard Shortcut Keys in Light Mode */
+.theme-light kbd {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #2563eb !important;
+}
+
+/* Quick Pick Cards & Product Items */
+.theme-light .bg-\[\#0d1424\]:hover,
+.theme-light .hover\:bg-\[\#111928\]\/60:hover,
+.theme-light .hover\:bg-slate-800\/60:hover {
+  background-color: #f1f5f9 !important;
 }
 
 /* Hide scrollbars for clean POS look */
@@ -32,4 +201,3 @@
     visibility: visible;
   }
 }
-

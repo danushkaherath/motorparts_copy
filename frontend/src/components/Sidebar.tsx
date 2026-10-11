@@ -22,11 +22,14 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import type { AppSettings, Shift, AppModule } from '../types';
 import { api } from '../services/api';
 import { localDb } from '../services/offlineDb';
+import { useTheme } from '../context/ThemeContext';
 
 interface SidebarProps {
   activeTab: AppModule;
@@ -55,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen = false,
   onCloseMobile,
 }) => {
+  const { theme, toggleTheme, isDark } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem('pos_sidebar_collapsed') === 'true';
@@ -295,6 +299,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
       </div>
+
+      {/* Theme Switcher Button */}
+      <button
+        onClick={toggleTheme}
+        title={isDark ? 'Switch to Modern Clean Light Theme' : 'Switch to Dark Mode Theme'}
+        className={`w-full py-1.5 rounded-xl border transition cursor-pointer flex items-center justify-center gap-2 text-xs font-semibold ${
+          isDark
+            ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700/80'
+            : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300 shadow-xs'
+        } ${collapsed ? 'px-0' : 'px-3'}`}
+      >
+        {isDark ? (
+          <>
+            <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            {!collapsed && <span>Light Theme</span>}
+          </>
+        ) : (
+          <>
+            <Moon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+            {!collapsed && <span>Dark Theme</span>}
+          </>
+        )}
+      </button>
 
       {/* Lock Terminal Button */}
       <button

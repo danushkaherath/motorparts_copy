@@ -13,11 +13,13 @@ import { CustomerManagement } from './pages/CustomerManagement';
 import { ShiftModal } from './components/ShiftModal';
 import { LockScreenModal } from './components/LockScreenModal';
 import { SubscriptionLockOverlay } from './components/SubscriptionLockOverlay';
-import { Menu, ShoppingBag, ShoppingCart, BookOpen, Package, BarChart3, Lock } from 'lucide-react';
+import { Menu, ShoppingBag, ShoppingCart, BookOpen, Package, BarChart3, Lock, Sun, Moon } from 'lucide-react';
 import type { AppSettings, Shift, AppModule } from './types';
 import { api } from './services/api';
+import { useTheme } from './context/ThemeContext';
 
 export function App() {
+  const { theme, toggleTheme, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<AppModule>('pos');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -192,6 +194,16 @@ export function App() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Theme Switcher Button */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 active:scale-95 transition cursor-pointer"
+          >
+            {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+          </button>
+
           <span className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-bold uppercase">
             {currentUser?.username || 'cashier'}
           </span>
