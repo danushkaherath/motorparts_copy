@@ -19,12 +19,15 @@ import {
   UserPlus,
   UserCheck,
   Star,
-  User
+  User,
+  Building2,
+  FileCheck,
 } from 'lucide-react';
 import type { Product, CartItem, AppSettings, Shift, OrderReceipt, Customer, ProductBatch } from '../types';
 import { api } from '../services/api';
 import { CashPaymentModal } from '../components/CashPaymentModal';
 import { CardPaymentModal } from '../components/CardPaymentModal';
+import { ChequePaymentModal } from '../components/ChequePaymentModal';
 import { ThermalReceipt } from '../components/ThermalReceipt';
 import { SupervisorPinModal } from '../components/SupervisorPinModal';
 import { SubstitutesModal } from '../components/SubstitutesModal';
@@ -38,6 +41,7 @@ interface PosTerminalProps {
   activeShift: Shift | null;
   currentUser?: any;
   onOpenShiftModal: () => void;
+  mode?: 'retail' | 'wholesale';
 }
 
 export const PosTerminal: React.FC<PosTerminalProps> = ({
@@ -45,7 +49,9 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
   activeShift,
   currentUser,
   onOpenShiftModal,
+  mode = 'retail',
 }) => {
+  const isWholesale = mode === 'wholesale';
   const [isSupervisorModalOpen, setIsSupervisorModalOpen] = useState<boolean>(false);
   const [pendingSupervisorAction, setPendingSupervisorAction] = useState<{ desc: string; callback: () => void } | null>(null);
 
@@ -62,12 +68,15 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
     heldCarts,
     addToCart,
     updateQuantity: updateCartQuantity,
+    updateItemDiscount,
     handleQuantityChange,
     handleQuantityBlur,
     removeLineItem: removeCartItem,
     clearCart,
     holdCart,
     recallCart,
+    grossSubtotal,
+    itemDiscountsTotal,
   } = useCart();
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -85,6 +94,7 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
   const [isRecentBillsOpen, setIsRecentBillsOpen] = useState<boolean>(false);
   const [isCashModalOpen, setIsCashModalOpen] = useState<boolean>(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState<boolean>(false);
+  const [isChequeModalOpen, setIsChequeModalOpen] = useState<boolean>(false);
   const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState<boolean>(false);
   const [completedReceipt, setCompletedReceipt] = useState<OrderReceipt | null>(null);
 
@@ -195,7 +205,7 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger shortcuts if an active payment or overlay modal is open
-      if (isCashModalOpen || isCardModalOpen || isSubstituteModalOpen || isSupervisorModalOpen || isBatchModalOpen || completedReceipt) {
+      if (isCashModalOpen || isCardModalOpen || isChequeModalOpen || isSubstituteModalOpen || isSupervisorModalOpen || isBatchModalOpen || completedReceipt) {
         return;
       }
 
@@ -214,6 +224,9 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
       } else if (e.key === 'F5') {
         e.preventDefault();
         if (cart.length > 0) setIsCardModalOpen(true);
+      } else if (e.key === 'F6' && isWholesale) {
+        e.preventDefault();
+        if (cart.length > 0) setIsChequeModalOpen(true);
       } else if (e.key === 'F1') {
         e.preventDefault();
         handleRecallCart();
@@ -222,7 +235,7 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [cart, isCashModalOpen, isCardModalOpen, isSubstituteModalOpen, isSupervisorModalOpen, isBatchModalOpen, completedReceipt, heldCarts]);
+  }, [cart, isCashModalOpen, isCardModalOpen, isChequeModalOpen, isSubstituteModalOpen, isSupervisorModalOpen, isBatchModalOpen, completedReceipt, heldCarts, isWholesale]);
 
   // Product batch evaluation: show batch popup if >1 active batch exists
   const handleProductSelected = async (product: Product) => {
@@ -399,7 +412,7 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
       return acc;
     }, 0) * 100
   ) / 100;
-  const totalCustomerSavings = Math.round((cartSavings + discountAmount + pointsDiscount) * 100) / 100;
+  const totalCustomerSavings = Math.round((cartSavings + itemDiscountsTotal + discountAmount + pointsDiscount) * 100) / 100;
 
   // Complete Payment (Cash)
   const handleCashConfirm = async (tenderAmount: number) => {
@@ -410,8 +423,10 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
         cashier_id: activeShift?.cashier_id || 'usr_cashier1',
         cashier_name: activeShift?.cashier_name || 'Cashier 1',
         payment_method: 'CASH',
+        order_type: isWholesale ? 'WHOLESALE' : 'RETAIL',
         items: cart,
         discount_amount: discountAmount,
+        item_discounts_total: itemDiscountsTotal,
         tender_amount: tenderAmount,
         customer_id: attachedCustomer?.id || null,
         customer_name: attachedCustomer?.name || null,
@@ -442,10 +457,50 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
         cashier_id: activeShift?.cashier_id || 'usr_cashier1',
         cashier_name: activeShift?.cashier_name || 'Cashier 1',
         payment_method: 'CARD',
+        order_type: isWholesale ? 'WHOLESALE' : 'RETAIL',
         items: cart,
         discount_amount: discountAmount,
+        item_discounts_total: itemDiscountsTotal,
         tender_amount: totalDue,
         card_reference: cardRef || null,
+        customer_id: attachedCustomer?.id || null,
+        customer_name: attachedCustomer?.name || null,
+        customer_phone: attachedCustomer?.phone || null,
+        points_redeemed: pointsToRedeem || 0,
+      };
+
+      const result = await api.checkout(payload, { settings });
+      setCompletedReceipt(result.order);
+      setCart([]);
+      setDiscountAmount(0);
+      setAttachedCustomer(null);
+      setCustomerPhoneInput('');
+      setPointsToRedeem(0);
+      setCustomerSearchNotFound(false);
+      setErrorMessage(null);
+    } catch (err: any) {
+      alert('Checkout error: ' + err.message);
+    }
+  };
+
+  // Complete Payment (Cheque / Check)
+  const handleChequeConfirm = async (chequeData: { chequeNumber: string; chequeDate: string; bankName?: string }) => {
+    try {
+      setIsChequeModalOpen(false);
+      const payload = {
+        shift_id: activeShift?.id || null,
+        cashier_id: activeShift?.cashier_id || 'usr_cashier1',
+        cashier_name: activeShift?.cashier_name || 'Cashier 1',
+        payment_method: 'CHEQUE',
+        order_type: isWholesale ? 'WHOLESALE' : 'RETAIL',
+        items: cart,
+        discount_amount: discountAmount,
+        item_discounts_total: itemDiscountsTotal,
+        tender_amount: totalDue,
+        cheque_number: chequeData.bankName 
+          ? `${chequeData.chequeNumber} (${chequeData.bankName})`
+          : chequeData.chequeNumber,
+        cheque_date: chequeData.chequeDate,
         customer_id: attachedCustomer?.id || null,
         customer_name: attachedCustomer?.name || null,
         customer_phone: attachedCustomer?.phone || null,
@@ -637,8 +692,27 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
           <span className="font-bold text-white font-mono">{formattedItemCount}</span>
         </div>
 
+        {itemDiscountsTotal > 0 && (
+          <div className="flex items-center justify-between text-slate-400">
+            <span>Items Gross Total:</span>
+            <span className="font-bold text-slate-300 font-mono">
+              {currency}{grossSubtotal.toFixed(2)}
+            </span>
+          </div>
+        )}
+
+        {itemDiscountsTotal > 0 && (
+          <div className="flex items-center justify-between text-emerald-400 text-xs">
+            <span className="flex items-center gap-1 font-semibold">
+              <Tag className="w-3.5 h-3.5" />
+              Item Discounts Total:
+            </span>
+            <span className="font-mono font-bold">- {currency}{itemDiscountsTotal.toFixed(2)}</span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-slate-400">
-          <span>Subtotal:</span>
+          <span>{itemDiscountsTotal > 0 ? 'Net Items Subtotal:' : 'Subtotal:'}</span>
           <span className="font-bold text-white font-mono text-sm md:text-base">
             {currency}{subtotal.toFixed(2)}
           </span>
@@ -673,7 +747,9 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
         {isDiscountsEnabled && (
           <div className="pt-2 border-t border-[#162135]">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400 text-xs">Discount:</span>
+              <span className="text-slate-400 text-xs">
+                {itemDiscountsTotal > 0 ? 'Order Discount (Overall):' : 'Discount:'}
+              </span>
               <div className="flex items-center gap-1">
                 <span className="text-slate-500 text-xs font-mono">- {currency}</span>
                 <input
@@ -771,24 +847,88 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
           </span>
         </button>
 
-        {/* Proceed to Pay Button (F4) */}
-        <button
-          type="button"
-          onClick={() => {
-            if (cart.length > 0) {
-              if (isMobileSheet) setIsMobileSummaryOpen(false);
-              setIsCashModalOpen(true);
-            }
-          }}
-          disabled={cart.length === 0}
-          className="w-full py-3.5 px-4 bg-[#00d2df] hover:bg-[#15e1ee] disabled:opacity-30 disabled:cursor-not-allowed text-slate-950 font-black rounded-2xl flex items-center justify-center gap-2 text-base shadow-xl shadow-cyan-500/25 transition cursor-pointer active:scale-98"
-        >
-          <CreditCard className="w-5 h-5" />
-          <span>Proceed to Pay</span>
-          <span className="px-2 py-0.5 rounded bg-slate-950/20 text-slate-950 font-mono text-xs font-bold">
-            F4
-          </span>
-        </button>
+        {/* Payment Buttons */}
+        {isWholesale ? (
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              {/* Pay Cash (F4) */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (cart.length > 0) {
+                    if (isMobileSheet) setIsMobileSummaryOpen(false);
+                    setIsCashModalOpen(true);
+                  }
+                }}
+                disabled={cart.length === 0}
+                className="py-3 px-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold rounded-2xl flex items-center justify-center gap-1.5 text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition cursor-pointer active:scale-98"
+              >
+                <DollarSign className="w-4 h-4" />
+                <span>Cash</span>
+                <span className="px-1.5 py-0.2 rounded bg-emerald-950/40 text-emerald-200 font-mono text-[10px]">
+                  F4
+                </span>
+              </button>
+
+              {/* Pay Card (F5) */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (cart.length > 0) {
+                    if (isMobileSheet) setIsMobileSummaryOpen(false);
+                    setIsCardModalOpen(true);
+                  }
+                }}
+                disabled={cart.length === 0}
+                className="py-3 px-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold rounded-2xl flex items-center justify-center gap-1.5 text-xs sm:text-sm shadow-md shadow-blue-600/20 transition cursor-pointer active:scale-98"
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>Card</span>
+                <span className="px-1.5 py-0.2 rounded bg-blue-950/40 text-blue-200 font-mono text-[10px]">
+                  F5
+                </span>
+              </button>
+            </div>
+
+            {/* Pay Cheque (F6) */}
+            <button
+              type="button"
+              onClick={() => {
+                if (cart.length > 0) {
+                  if (isMobileSheet) setIsMobileSummaryOpen(false);
+                  setIsChequeModalOpen(true);
+                }
+              }}
+              disabled={cart.length === 0}
+              className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-sm shadow-lg shadow-purple-600/20 transition cursor-pointer active:scale-98"
+            >
+              <FileCheck className="w-4 h-4" />
+              <span>Pay with Cheque / Check</span>
+              <span className="px-1.5 py-0.5 rounded bg-purple-950/40 text-purple-200 font-mono text-[10px]">
+                F6
+              </span>
+            </button>
+          </div>
+        ) : (
+          /* Retail Mode: Default Proceed to Pay Button (F4) */
+          <button
+            type="button"
+            onClick={() => {
+              if (cart.length > 0) {
+                if (isMobileSheet) setIsMobileSummaryOpen(false);
+                setIsCashModalOpen(true);
+              }
+            }}
+            disabled={cart.length === 0}
+            className="w-full py-3.5 px-4 bg-[#00d2df] hover:bg-[#15e1ee] disabled:opacity-30 disabled:cursor-not-allowed text-slate-950 font-black rounded-2xl flex items-center justify-center gap-2 text-base shadow-xl shadow-cyan-500/25 transition cursor-pointer active:scale-98"
+          >
+            <CreditCard className="w-5 h-5" />
+            <span>Proceed to Pay</span>
+            <span className="px-2 py-0.5 rounded bg-slate-950/20 text-slate-950 font-mono text-xs font-bold">
+              F4
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -816,6 +956,28 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
             >
               Open Shift
             </button>
+          </div>
+        )}
+
+        {/* Wholesale Mode Banner */}
+        {isWholesale && (
+          <div className="bg-gradient-to-r from-indigo-950/80 via-purple-950/60 to-slate-900 border border-indigo-500/40 px-3.5 py-2 rounded-2xl flex items-center justify-between text-indigo-200 text-xs shrink-0 shadow-md">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
+                <Building2 className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <span className="font-extrabold text-white text-xs tracking-wide block">
+                  WHOLESALE TERMINAL (B2B TRADE)
+                </span>
+                <span className="text-[10px] text-indigo-300 hidden sm:inline">
+                  Item-by-item discounts & overall cart discounts enabled
+                </span>
+              </div>
+            </div>
+            <span className="text-[10px] bg-indigo-500/25 text-indigo-300 border border-indigo-400/30 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider font-mono">
+              B2B Mode Active
+            </span>
           </div>
         )}
 
@@ -1086,10 +1248,11 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
                   <thead>
                     <tr className="bg-[#0e1626] border-b border-[#162135] text-slate-400 text-[11px] uppercase font-bold tracking-wider sticky top-0 z-10">
                       <th className="py-3 px-5">ITEM DETAILS</th>
-                      <th className="py-3 px-5 text-right">PRICE / ACTUAL</th>
-                      <th className="py-3 px-5 text-center">QTY</th>
-                      <th className="py-3 px-5 text-right">LINE TOTAL</th>
-                      <th className="py-3 px-5 text-center">ACTION</th>
+                      <th className="py-3 px-4 text-right">PRICE / ACTUAL</th>
+                      <th className="py-3 px-4 text-center">QTY</th>
+                      {isWholesale && <th className="py-3 px-4 text-center">ITEM DISCOUNT</th>}
+                      <th className="py-3 px-4 text-right">LINE TOTAL</th>
+                      <th className="py-3 px-4 text-center">ACTION</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#152033] text-xs md:text-sm">
@@ -1183,11 +1346,90 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
                             </div>
                           </td>
 
+                          {/* ITEM DISCOUNT (WHOLESALE MODE) */}
+                          {isWholesale && (
+                            <td className="py-3 px-3 text-center">
+                              <div className="inline-flex flex-col items-center gap-1">
+                                <div className="inline-flex items-center bg-[#070b13] border border-[#1b283f] focus-within:border-indigo-500 rounded-xl p-0.5 shadow-inner">
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="0"
+                                    value={item.discount_value !== undefined && item.discount_value > 0 ? item.discount_value : ''}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value) || 0;
+                                      updateItemDiscount(index, item.discount_type || 'percent', val);
+                                    }}
+                                    className="w-12 text-center font-bold text-white text-xs font-mono bg-transparent outline-hidden px-1"
+                                    title="Type discount value"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const nextType = item.discount_type === 'amount' ? 'percent' : 'amount';
+                                      updateItemDiscount(index, nextType, item.discount_value || 0);
+                                    }}
+                                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                                      item.discount_type === 'amount'
+                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                        : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
+                                    }`}
+                                    title={`Toggle discount type (currently ${item.discount_type === 'amount' ? 'Fixed Currency' : 'Percent %'})`}
+                                  >
+                                    {item.discount_type === 'amount' ? currency.trim() : '%'}
+                                  </button>
+                                </div>
+                                <div className="flex items-center gap-1 text-[9px]">
+                                  {[5, 10, 15, 20].map((pct) => (
+                                    <button
+                                      key={pct}
+                                      type="button"
+                                      onClick={() => updateItemDiscount(index, 'percent', pct)}
+                                      className={`px-1 rounded font-bold transition cursor-pointer ${
+                                        item.discount_type === 'percent' && item.discount_value === pct
+                                          ? 'bg-indigo-600 text-white shadow-xs'
+                                          : 'text-slate-400 bg-slate-800 hover:text-white hover:bg-slate-700'
+                                      }`}
+                                    >
+                                      {pct}%
+                                    </button>
+                                  ))}
+                                  {item.discount_value && item.discount_value > 0 ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => updateItemDiscount(index, 'percent', 0)}
+                                      className="text-rose-400 hover:text-rose-300 px-0.5 font-bold cursor-pointer"
+                                      title="Clear item discount"
+                                    >
+                                      ✕
+                                    </button>
+                                  ) : null}
+                                </div>
+                                {item.discount_amount && item.discount_amount > 0 ? (
+                                  <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                                    -{currency}{item.discount_amount.toFixed(2)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </td>
+                          )}
+
                           {/* LINE TOTAL */}
                           <td className="py-3.5 px-4 text-right font-mono">
-                            <span className="font-extrabold text-cyan-400 text-xs md:text-base">
-                              {currency}{item.subtotal.toFixed(2)}
-                            </span>
+                            {item.discount_amount && item.discount_amount > 0 ? (
+                              <div>
+                                <div className="text-[10px] text-slate-500 line-through">
+                                  {currency}{(Number(item.quantity) * item.unit_price).toFixed(2)}
+                                </div>
+                                <span className="font-extrabold text-emerald-400 text-xs md:text-base">
+                                  {currency}{item.subtotal.toFixed(2)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="font-extrabold text-cyan-400 text-xs md:text-base">
+                                {currency}{item.subtotal.toFixed(2)}
+                              </span>
+                            )}
                           </td>
 
                           {/* ACTION */}
@@ -1272,14 +1514,76 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
                         </div>
 
                         <div className="text-right font-mono">
-                          <span className="text-[10px] text-slate-400 block">
-                            @{currency}{item.unit_price.toFixed(2)}
-                          </span>
-                          <span className="font-extrabold text-cyan-400 text-sm">
-                            {currency}{item.subtotal.toFixed(2)}
-                          </span>
+                          {item.discount_amount && item.discount_amount > 0 ? (
+                            <>
+                              <span className="text-[10px] text-slate-500 line-through block">
+                                {currency}{(Number(item.quantity) * item.unit_price).toFixed(2)}
+                              </span>
+                              <span className="font-extrabold text-emerald-400 text-sm">
+                                {currency}{item.subtotal.toFixed(2)}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-[10px] text-slate-400 block">
+                                @{currency}{item.unit_price.toFixed(2)}
+                              </span>
+                              <span className="font-extrabold text-cyan-400 text-sm">
+                                {currency}{item.subtotal.toFixed(2)}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
+
+                      {/* Mobile Item Discount Row (Wholesale Mode) */}
+                      {isWholesale && (
+                        <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-[#152033] text-xs">
+                          <span className="text-[10px] text-indigo-300 font-bold shrink-0">Item Disc:</span>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              placeholder="0"
+                              value={item.discount_value !== undefined && item.discount_value > 0 ? item.discount_value : ''}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                updateItemDiscount(index, item.discount_type || 'percent', val);
+                              }}
+                              className="w-10 bg-[#070b13] border border-[#1b283f] text-center px-1 py-0.5 text-xs text-white font-mono rounded-lg outline-hidden"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const nextType = item.discount_type === 'amount' ? 'percent' : 'amount';
+                                updateItemDiscount(index, nextType, item.discount_value || 0);
+                              }}
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                item.discount_type === 'amount' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                              }`}
+                            >
+                              {item.discount_type === 'amount' ? currency.trim() : '%'}
+                            </button>
+                            {[5, 10, 15].map((pct) => (
+                              <button
+                                key={pct}
+                                type="button"
+                                onClick={() => updateItemDiscount(index, 'percent', pct)}
+                                className={`px-1 py-0.5 rounded text-[9px] font-bold ${
+                                  item.discount_type === 'percent' && item.discount_value === pct ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+                                }`}
+                              >
+                                {pct}%
+                              </button>
+                            ))}
+                          </div>
+                          {item.discount_amount && item.discount_amount > 0 ? (
+                            <span className="text-[10px] text-emerald-400 font-mono font-bold shrink-0">
+                              -{currency}{item.discount_amount.toFixed(2)}
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1309,6 +1613,9 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
               <span><kbd className="bg-[#121c2e] text-cyan-400 px-1.5 py-0.5 rounded border border-[#1d2d46]">F2</kbd> Search</span>
               <span><kbd className="bg-[#121c2e] text-cyan-400 px-1.5 py-0.5 rounded border border-[#1d2d46]">F4</kbd> Cash</span>
               <span><kbd className="bg-[#121c2e] text-cyan-400 px-1.5 py-0.5 rounded border border-[#1d2d46]">F5</kbd> Card</span>
+              {isWholesale && (
+                <span><kbd className="bg-[#121c2e] text-purple-400 px-1.5 py-0.5 rounded border border-[#1d2d46]">F6</kbd> Cheque</span>
+              )}
               <span><kbd className="bg-[#121c2e] text-cyan-400 px-1.5 py-0.5 rounded border border-[#1d2d46]">F8</kbd> Hold</span>
               <span><kbd className="bg-[#121c2e] text-cyan-400 px-1.5 py-0.5 rounded border border-[#1d2d46]">Esc</kbd> Clear</span>
             </div>
@@ -1347,6 +1654,19 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
           >
             Summary
           </button>
+          {isWholesale && (
+            <button
+              type="button"
+              onClick={() => {
+                if (cart.length > 0) setIsChequeModalOpen(true);
+              }}
+              disabled={cart.length === 0}
+              className="px-3 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-md shadow-purple-600/20 active:scale-95 transition cursor-pointer"
+            >
+              <FileCheck className="w-3.5 h-3.5" />
+              <span>Cheque</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -1410,6 +1730,10 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
           setIsCashModalOpen(false);
           setIsCardModalOpen(true);
         }}
+        onSwitchToCheque={isWholesale ? () => {
+          setIsCashModalOpen(false);
+          setIsChequeModalOpen(true);
+        } : undefined}
       />
 
       {/* Card Modal */}
@@ -1425,6 +1749,30 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
         onSwitchToCash={() => {
           setIsCardModalOpen(false);
           setIsCashModalOpen(true);
+        }}
+        onSwitchToCheque={isWholesale ? () => {
+          setIsCardModalOpen(false);
+          setIsChequeModalOpen(true);
+        } : undefined}
+      />
+
+      {/* Cheque Modal (Wholesale B2B) */}
+      <ChequePaymentModal
+        isOpen={isChequeModalOpen}
+        totalDue={totalDue}
+        settings={settings}
+        onClose={() => {
+          setIsChequeModalOpen(false);
+          focusBarcode();
+        }}
+        onConfirm={handleChequeConfirm}
+        onSwitchToCash={() => {
+          setIsChequeModalOpen(false);
+          setIsCashModalOpen(true);
+        }}
+        onSwitchToCard={() => {
+          setIsChequeModalOpen(false);
+          setIsCardModalOpen(true);
         }}
       />
 

@@ -55,9 +55,9 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
     } catch {}
 
     if (!parsedPermissions.length) {
-      if (user.role === 'admin') parsedPermissions = ['pos', 'inventory', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'];
-      else if (user.role === 'supervisor') parsedPermissions = ['pos', 'inventory', 'customers', 'shifts', 'reports'];
-      else parsedPermissions = ['pos'];
+      if (user.role === 'admin') parsedPermissions = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'];
+      else if (user.role === 'supervisor') parsedPermissions = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'];
+      else parsedPermissions = ['pos', 'wholesale'];
     }
 
     const tokenPayload = {
@@ -91,9 +91,9 @@ authRouter.get('/users', async (_req: Request, res: Response): Promise<void> => 
         if (u.permissions) perms = typeof u.permissions === 'string' ? JSON.parse(u.permissions) : u.permissions;
       } catch {}
       if (!perms.length) {
-        if (u.role === 'admin') perms = ['pos', 'inventory', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'];
-        else if (u.role === 'supervisor') perms = ['pos', 'inventory', 'customers', 'shifts', 'reports'];
-        else perms = ['pos'];
+        if (u.role === 'admin') perms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'];
+        else if (u.role === 'supervisor') perms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'];
+        else perms = ['pos', 'wholesale'];
       }
       return {
         ...u,
@@ -139,9 +139,9 @@ authRouter.post('/users', async (req: Request, res: Response): Promise<void> => 
 
     let finalPerms: string[] = Array.isArray(permissions) ? permissions : [];
     if (!finalPerms.length) {
-      if (role === 'admin') finalPerms = ['pos', 'inventory', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'];
-      else if (role === 'supervisor') finalPerms = ['pos', 'inventory', 'customers', 'shifts', 'reports'];
-      else finalPerms = ['pos'];
+      if (role === 'admin') finalPerms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'];
+      else if (role === 'supervisor') finalPerms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'];
+      else finalPerms = ['pos', 'wholesale'];
     }
 
     const id = 'usr_' + uuidv4().slice(0, 8);

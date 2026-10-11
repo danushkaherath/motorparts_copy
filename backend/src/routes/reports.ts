@@ -6,11 +6,12 @@ export const reportsRouter = Router();
 // Dashboard summary stats
 reportsRouter.get('/summary', async (_req: Request, res: Response): Promise<void> => {
   try {
-    const todaySales = await dbGet<{ total: number; cash: number; card: number; count: number }>(`
+    const todaySales = await dbGet<{ total: number; cash: number; card: number; cheque: number; count: number }>(`
       SELECT 
         COALESCE(SUM(total_amount), 0) as total,
         COALESCE(SUM(CASE WHEN payment_method = 'CASH' THEN total_amount ELSE 0 END), 0) as cash,
         COALESCE(SUM(CASE WHEN payment_method = 'CARD' THEN total_amount ELSE 0 END), 0) as card,
+        COALESCE(SUM(CASE WHEN payment_method = 'CHEQUE' THEN total_amount ELSE 0 END), 0) as cheque,
         COUNT(*) as count
       FROM orders 
       WHERE date(created_at) = date('now') AND (status IS NULL OR status != 'VOIDED')
@@ -33,6 +34,7 @@ reportsRouter.get('/summary', async (_req: Request, res: Response): Promise<void
       today_sales: todaySales?.total || 0,
       today_cash_sales: todaySales?.cash || 0,
       today_card_sales: todaySales?.card || 0,
+      today_cheque_sales: todaySales?.cheque || 0,
       today_transactions: todaySales?.count || 0,
       low_stock_count: lowStockCount?.count || 0,
       expiring_count: expiringCount?.count || 0,
@@ -175,7 +177,8 @@ reportsRouter.get('/analytics', async (req: Request, res: Response): Promise<voi
         COALESCE(SUM(o.discount_amount), 0) as total_discounts,
         COALESCE(SUM(o.tax_amount), 0) as total_tax,
         COALESCE(SUM(CASE WHEN o.payment_method = 'CASH' THEN o.total_amount ELSE 0 END), 0) as cash_revenue,
-        COALESCE(SUM(CASE WHEN o.payment_method = 'CARD' THEN o.total_amount ELSE 0 END), 0) as card_revenue
+        COALESCE(SUM(CASE WHEN o.payment_method = 'CARD' THEN o.total_amount ELSE 0 END), 0) as card_revenue,
+        COALESCE(SUM(CASE WHEN o.payment_method = 'CHEQUE' THEN o.total_amount ELSE 0 END), 0) as cheque_revenue
       FROM orders o
       ${ordersWhere}
     `, params);
@@ -323,6 +326,7 @@ reportsRouter.get('/analytics', async (req: Request, res: Response): Promise<voi
         total_units_sold: Number(cogsQuery?.total_units_sold || 0),
         cash_revenue: Number(summaryOrders?.cash_revenue || 0),
         card_revenue: Number(summaryOrders?.card_revenue || 0),
+        cheque_revenue: Number(summaryOrders?.cheque_revenue || 0),
         discounts: Number(summaryOrders?.total_discounts || 0),
         tax: Number(summaryOrders?.total_tax || 0),
       },

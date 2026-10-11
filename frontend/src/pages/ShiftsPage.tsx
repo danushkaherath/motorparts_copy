@@ -110,7 +110,7 @@ export const ShiftsPage: React.FC<ShiftsPageProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-4 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mt-4 text-center">
               <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
                 <span className="text-[10px] text-slate-400 uppercase font-semibold block">Opening Float</span>
                 <span className="text-lg font-bold text-slate-200 font-mono">
@@ -127,6 +127,12 @@ export const ShiftsPage: React.FC<ShiftsPageProps> = ({
                 <span className="text-[10px] text-slate-400 uppercase font-semibold block">Card Sales</span>
                 <span className="text-lg font-bold text-blue-400 font-mono">
                   {currency}{activeShift.card_sales.toFixed(2)}
+                </span>
+              </div>
+              <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                <span className="text-[10px] text-slate-400 uppercase font-semibold block">Cheque Sales</span>
+                <span className="text-lg font-bold text-purple-400 font-mono">
+                  {currency}{(activeShift.cheque_sales || 0).toFixed(2)}
                 </span>
               </div>
               <div className="bg-slate-950/60 p-3 rounded-xl border border-purple-500/30">
@@ -155,6 +161,7 @@ export const ShiftsPage: React.FC<ShiftsPageProps> = ({
                   <th className="py-3 px-4 text-right">Opening Float</th>
                   <th className="py-3 px-4 text-right">Cash Sales</th>
                   <th className="py-3 px-4 text-right">Card Sales</th>
+                  <th className="py-3 px-4 text-right">Cheque Sales</th>
                   <th className="py-3 px-4 text-right">Total Sales</th>
                   <th className="py-3 px-4 text-right">Expected Cash</th>
                   <th className="py-3 px-4 text-right">Actual Count</th>
@@ -164,7 +171,7 @@ export const ShiftsPage: React.FC<ShiftsPageProps> = ({
               <tbody className="divide-y divide-slate-800/60 font-sans">
                 {shifts.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-12 text-center text-slate-500">
+                    <td colSpan={11} className="py-12 text-center text-slate-500">
                       No past shift records found.
                     </td>
                   </tr>
@@ -194,6 +201,7 @@ export const ShiftsPage: React.FC<ShiftsPageProps> = ({
                         <td className="py-3 px-4 text-right">{currency}{s.opening_float.toFixed(2)}</td>
                         <td className="py-3 px-4 text-right text-emerald-400">{currency}{s.cash_sales.toFixed(2)}</td>
                         <td className="py-3 px-4 text-right text-blue-400">{currency}{s.card_sales.toFixed(2)}</td>
+                        <td className="py-3 px-4 text-right text-purple-400">{currency}{(s.cheque_sales || 0).toFixed(2)}</td>
                         <td className="py-3 px-4 text-right font-bold text-white">{currency}{s.total_sales.toFixed(2)}</td>
                         <td className="py-3 px-4 text-right">{currency}{s.expected_cash.toFixed(2)}</td>
                         <td className="py-3 px-4 text-right font-bold">

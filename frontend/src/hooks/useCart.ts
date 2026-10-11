@@ -13,6 +13,29 @@ export interface AddToCartResult {
   maxStock?: number;
 }
 
+function calcLineSubtotal(
+  qty: number,
+  unitPrice: number,
+  discountType?: 'amount' | 'percent',
+  discountVal?: number
+): { gross: number; discountAmount: number; discountPercent: number; net: number } {
+  const lineGross = Math.round(qty * unitPrice * 100) / 100;
+  if (!discountVal || discountVal <= 0) {
+    return { gross: lineGross, discountAmount: 0, discountPercent: 0, net: lineGross };
+  }
+  let discountAmount = 0;
+  let discountPercent = 0;
+  if (discountType === 'percent') {
+    discountPercent = Math.min(100, Math.max(0, discountVal));
+    discountAmount = Math.round((lineGross * (discountPercent / 100)) * 100) / 100;
+  } else {
+    discountAmount = Math.min(lineGross, Math.max(0, Math.round(discountVal * 100) / 100));
+    discountPercent = lineGross > 0 ? Math.round((discountAmount / lineGross) * 10000) / 100 : 0;
+  }
+  const net = Math.max(0, Math.round((lineGross - discountAmount) * 100) / 100);
+  return { gross: lineGross, discountAmount, discountPercent, net };
+}
+
 export function useCart() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [heldCarts, setHeldCarts] = useState<HeldCart[]>([]);
@@ -77,10 +100,13 @@ export function useCart() {
         if (typeof maxStock === 'number') {
           newQty = Math.min(newQty, maxStock);
         }
+        const calc = calcLineSubtotal(newQty, item.unit_price, item.discount_type, item.discount_value);
         updated[existingIdx] = {
           ...item,
           quantity: newQty,
-          subtotal: Math.round(newQty * item.unit_price * 100) / 100,
+          discount_amount: calc.discountAmount,
+          discount_percent: calc.discountPercent,
+          subtotal: calc.net,
         };
         return updated;
       } else {
@@ -104,6 +130,10 @@ export function useCart() {
             batch_id: batchId,
             expiry_date: expiry,
             stock_quantity: stockQty,
+            discount_type: 'percent',
+            discount_value: 0,
+            discount_amount: 0,
+            discount_percent: 0,
           },
         ];
       }
@@ -129,10 +159,38 @@ export function useCart() {
         }
         newQty = Math.min(newQty, item.stock_quantity);
       }
+      const calc = calcLineSubtotal(newQty, item.unit_price, item.discount_type, item.discount_value);
       updated[index] = {
         ...item,
         quantity: newQty,
-        subtotal: Math.round(newQty * item.unit_price * 100) / 100,
+        discount_amount: calc.discountAmount,
+        discount_percent: calc.discountPercent,
+        subtotal: calc.net,
+      };
+      return updated;
+    });
+  };
+
+  // Set individual item discount (amount or percent)
+  const updateItemDiscount = (
+    index: number,
+    discountType: 'amount' | 'percent',
+    discountValue: number
+  ) => {
+    setCart((prev) => {
+      const updated = [...prev];
+      const item = updated[index];
+      if (!item) return prev;
+      const qty = typeof item.quantity === 'number' ? item.quantity : parseFloat(String(item.quantity)) || 0;
+      const calc = calcLineSubtotal(qty, item.unit_price, discountType, discountValue);
+
+      updated[index] = {
+        ...item,
+        discount_type: discountType,
+        discount_value: discountValue,
+        discount_amount: calc.discountAmount,
+        discount_percent: calc.discountPercent,
+        subtotal: calc.net,
       };
       return updated;
     });
@@ -152,15 +210,19 @@ export function useCart() {
           ...item,
           quantity: valStr,
           subtotal: 0,
+          discount_amount: 0,
         };
         return updated;
       }
       const val = parseFloat(valStr);
       if (isNaN(val)) return prev;
+      const calc = calcLineSubtotal(val, item.unit_price, item.discount_type, item.discount_value);
       updated[index] = {
         ...item,
         quantity: valStr,
-        subtotal: Math.round(val * item.unit_price * 100) / 100,
+        discount_amount: calc.discountAmount,
+        discount_percent: calc.discountPercent,
+        subtotal: calc.net,
       };
       return updated;
     });
@@ -183,10 +245,13 @@ export function useCart() {
         }
         cleanQty = Math.min(cleanQty, item.stock_quantity);
       }
+      const calc = calcLineSubtotal(cleanQty, item.unit_price, item.discount_type, item.discount_value);
       updated[index] = {
         ...item,
         quantity: cleanQty,
-        subtotal: Math.round(cleanQty * item.unit_price * 100) / 100,
+        discount_amount: calc.discountAmount,
+        discount_percent: calc.discountPercent,
+        subtotal: calc.net,
       };
       return updated;
     });
@@ -225,13 +290,27 @@ export function useCart() {
     return true;
   };
 
-  // Subtotal calculation
+  // Subtotal calculation (net subtotal after line item discounts)
   const subtotal = useMemo(() => {
+    return Math.round(
+      cart.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0) * 100
+    ) / 100;
+  }, [cart]);
+
+  // Gross subtotal (before line item discounts)
+  const grossSubtotal = useMemo(() => {
     return Math.round(
       cart.reduce((sum, item) => {
         const itemQty = typeof item.quantity === 'number' ? item.quantity : parseFloat(String(item.quantity)) || 0;
         return sum + itemQty * item.unit_price;
       }, 0) * 100
+    ) / 100;
+  }, [cart]);
+
+  // Total line item discounts
+  const itemDiscountsTotal = useMemo(() => {
+    return Math.round(
+      cart.reduce((sum, item) => sum + (Number(item.discount_amount) || 0), 0) * 100
     ) / 100;
   }, [cart]);
 
@@ -250,6 +329,7 @@ export function useCart() {
     setHeldCarts,
     addToCart,
     updateQuantity,
+    updateItemDiscount,
     handleQuantityChange,
     handleQuantityBlur,
     removeLineItem,
@@ -257,6 +337,8 @@ export function useCart() {
     holdCart,
     recallCart,
     subtotal,
+    grossSubtotal,
+    itemDiscountsTotal,
     itemCount,
   };
 }

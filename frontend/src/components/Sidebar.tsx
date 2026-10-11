@@ -18,6 +18,7 @@ import {
   HeartHandshake,
   BookOpen,
   ClipboardCheck,
+  Building2,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -137,9 +138,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // Fallbacks if permissions array is not set or empty
     if (currentUser.role === 'admin') return true;
     if (currentUser.role === 'supervisor') {
-      return ['pos', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'].includes(mod);
+      return ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'].includes(mod);
     }
-    return mod === 'pos';
+    return mod === 'pos' || mod === 'wholesale';
   };
 
   interface NavItem {
@@ -157,6 +158,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: <ShoppingCart className="w-4 h-4 shrink-0" />,
       activeColor: 'bg-emerald-600 text-white shadow-sm',
       visible: hasModuleAccess('pos'),
+    },
+    {
+      id: 'wholesale',
+      label: 'Wholesale POS',
+      icon: <Building2 className="w-4 h-4 shrink-0" />,
+      activeColor: 'bg-indigo-600 text-white shadow-sm',
+      visible: hasModuleAccess('wholesale'),
     },
     {
       id: 'catalog',

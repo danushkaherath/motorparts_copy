@@ -152,16 +152,16 @@ export function App() {
     // Fallbacks if permissions array is not set or empty
     if (currentUser.role === 'admin') return true;
     if (currentUser.role === 'supervisor') {
-      return ['pos', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'].includes(mod);
+      return ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'].includes(mod);
     }
-    return mod === 'pos';
+    return mod === 'pos' || mod === 'wholesale';
   };
 
   // Redirect to permitted tab if current activeTab becomes unauthorized
   useEffect(() => {
     if (!hasModuleAccess(activeTab)) {
       const allTabs: AppModule[] = [
-        'pos', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'
+        'pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'
       ];
       const fallbackTab = allTabs.find((t) => hasModuleAccess(t)) || 'pos';
       setActiveTab(fallbackTab);
@@ -176,7 +176,7 @@ export function App() {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 active:scale-95 transition cursor-pointer"
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-755 text-slate-200 active:scale-95 transition cursor-pointer"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
@@ -199,7 +199,7 @@ export function App() {
             type="button"
             onClick={handleLock}
             title="Lock Register (F9)"
-            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-amber-400 border border-slate-700 active:scale-95 transition cursor-pointer"
+            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-755 text-amber-400 border border-slate-700 active:scale-95 transition cursor-pointer"
           >
             <Lock className="w-4 h-4" />
           </button>
@@ -232,6 +232,17 @@ export function App() {
             activeShift={activeShift}
             currentUser={currentUser}
             onOpenShiftModal={handleOpenShiftModal}
+            mode="retail"
+          />
+        )}
+
+        {activeTab === 'wholesale' && hasModuleAccess('wholesale') && (
+          <PosTerminal
+            settings={settings}
+            activeShift={activeShift}
+            currentUser={currentUser}
+            onOpenShiftModal={handleOpenShiftModal}
+            mode="wholesale"
           />
         )}
 

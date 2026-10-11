@@ -9,6 +9,7 @@ interface CardPaymentModalProps {
   onClose: () => void;
   onConfirm: (cardRef: string) => void;
   onSwitchToCash?: () => void;
+  onSwitchToCheque?: () => void;
 }
 
 export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
@@ -18,6 +19,7 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
   onClose,
   onConfirm,
   onSwitchToCash,
+  onSwitchToCheque,
 }) => {
   const [cardRef, setCardRef] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +67,16 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
               >
                 <span>Switch to Cash</span>
                 <span className="text-[10px] text-emerald-200 font-mono hidden sm:inline">[F4]</span>
+              </button>
+            )}
+            {onSwitchToCheque && (
+              <button
+                type="button"
+                onClick={onSwitchToCheque}
+                className="px-2.5 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+              >
+                <span>Switch to Cheque</span>
+                <span className="text-[10px] text-purple-200 font-mono hidden sm:inline">[F6]</span>
               </button>
             )}
             <button

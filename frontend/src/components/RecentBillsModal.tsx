@@ -264,9 +264,17 @@ export const RecentBillsModal: React.FC<RecentBillsModalProps> = ({
                           <span className={`px-2 py-0.5 rounded font-bold text-[10px] inline-flex items-center gap-1 ${
                             ord.payment_method === 'CASH'
                               ? 'bg-emerald-950/70 border border-emerald-800/80 text-emerald-300'
-                              : 'bg-blue-950/70 border border-blue-800/80 text-blue-300'
+                              : ord.payment_method === 'CARD'
+                              ? 'bg-blue-950/70 border border-blue-800/80 text-blue-300'
+                              : 'bg-purple-950/70 border border-purple-800/80 text-purple-300'
                           }`}>
-                            {ord.payment_method === 'CASH' ? <DollarSign className="w-2.5 h-2.5" /> : <CreditCard className="w-2.5 h-2.5" />}
+                            {ord.payment_method === 'CASH' ? (
+                              <DollarSign className="w-2.5 h-2.5" />
+                            ) : ord.payment_method === 'CARD' ? (
+                              <CreditCard className="w-2.5 h-2.5" />
+                            ) : (
+                              <Receipt className="w-2.5 h-2.5" />
+                            )}
                             <span>{ord.payment_method}</span>
                           </span>
                         </td>

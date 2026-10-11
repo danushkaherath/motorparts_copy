@@ -608,7 +608,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-slate-200">{ord.order_number}</span>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          ord.payment_method === 'CASH' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-cyan-500/20 text-cyan-300'
+                          ord.payment_method === 'CASH' 
+                            ? 'bg-emerald-500/20 text-emerald-300' 
+                            : ord.payment_method === 'CARD'
+                            ? 'bg-cyan-500/20 text-cyan-300'
+                            : 'bg-purple-500/20 text-purple-300'
                         }`}>
                           {ord.payment_method}
                         </span>

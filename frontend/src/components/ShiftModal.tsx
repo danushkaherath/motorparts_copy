@@ -254,6 +254,12 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
                       <span>Card Sales:</span>
                       <span>{currency}{reportData.card_sales?.toFixed(2)}</span>
                     </div>
+                    {reportData.cheque_sales !== undefined && reportData.cheque_sales > 0 ? (
+                      <div className="flex justify-between text-purple-400">
+                        <span>Cheque Sales:</span>
+                        <span>{currency}{reportData.cheque_sales?.toFixed(2)}</span>
+                      </div>
+                    ) : null}
                     <div className="flex justify-between font-bold text-white text-sm border-t border-slate-800 pt-1">
                       <span>TOTAL SALES:</span>
                       <span>{currency}{reportData.total_sales?.toFixed(2)}</span>
@@ -305,6 +311,12 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
                     <span>Card Sales:</span>
                     <span className="font-bold text-blue-400">{currency}{Number(activeShift.card_sales || 0).toFixed(2)}</span>
                   </div>
+                  {Number(activeShift.cheque_sales || 0) > 0 && (
+                    <div className="flex justify-between text-slate-400">
+                      <span>Cheque Sales:</span>
+                      <span className="font-bold text-purple-400">{currency}{Number(activeShift.cheque_sales || 0).toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-slate-100 pt-1.5 border-t border-slate-800 font-bold text-sm">
                     <span>Expected Cash in Drawer:</span>
                     <span className="text-amber-300 font-black">{currency}{expectedCashInDrawer.toFixed(2)}</span>
@@ -411,6 +423,12 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
                     <span>Card Sales:</span>
                     <span>{currency}{reportData.card_sales?.toFixed(2)}</span>
                   </div>
+                  {reportData.cheque_sales !== undefined && reportData.cheque_sales > 0 && (
+                    <div className="flex justify-between">
+                      <span>Cheque Sales:</span>
+                      <span>{currency}{reportData.cheque_sales?.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold pt-1 border-t border-dotted border-gray-400">
                     <span>TOTAL SALES:</span>
                     <span>{currency}{reportData.total_sales?.toFixed(2)}</span>

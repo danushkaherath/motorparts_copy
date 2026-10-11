@@ -318,6 +318,15 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
               </div>
             )}
 
+            {/* Wholesale Banner */}
+            {receipt.order_type === 'WHOLESALE' && (
+              <div className="my-1.5 py-1 px-2 border border-dashed border-indigo-700 bg-indigo-50/50 text-center rounded">
+                <div className="text-indigo-900 font-extrabold text-[11px] tracking-wider uppercase">
+                  *** WHOLESALE INVOICE ***
+                </div>
+              </div>
+            )}
+
             {/* Line Items Table */}
             <div className="py-2 border-b border-dashed border-gray-400">
               <div className="flex justify-between text-[9.5px] font-medium text-gray-500 pb-1 uppercase tracking-wider border-b border-dotted border-gray-300">
@@ -328,6 +337,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
                 const mrp = Number(item.mrp || 0);
                 const hasDiscount = mrp > item.unit_price;
                 const itemSavings = hasDiscount ? (mrp - item.unit_price) * Number(item.quantity) : 0;
+                const lineItemDisc = Number(item.discount_amount || 0);
                 return (
                   <div key={idx} className="py-1.5 border-b border-dotted border-gray-200 last:border-0">
                     {/* Complete Item Name (Uncut, wraps to 2 lines if needed, thin letters) */}
@@ -344,6 +354,16 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
                         {currency}{item.subtotal.toFixed(2)}
                       </span>
                     </div>
+
+                    {/* Item-level discount if any */}
+                    {lineItemDisc > 0 && (
+                      <div className="flex justify-between items-center text-[9.5px] text-emerald-700 font-medium pt-0.5">
+                        <span>ITEM DISCOUNT:</span>
+                        <span>
+                          -{currency}{lineItemDisc.toFixed(2)} {item.discount_percent ? `(${item.discount_percent}%)` : ''}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Discount/MRP breakdown if applicable */}
                     {hasDiscount && (
@@ -365,9 +385,15 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
                 <span>SUBTOTAL:</span>
                 <span className="font-normal text-gray-900">{currency}{receipt.subtotal.toFixed(2)}</span>
               </div>
+              {receipt.item_discounts_total && receipt.item_discounts_total > 0 ? (
+                <div className="flex justify-between text-emerald-700">
+                  <span>ITEM DISCOUNTS:</span>
+                  <span>-{currency}{receipt.item_discounts_total.toFixed(2)}</span>
+                </div>
+              ) : null}
               {receipt.discount_amount > 0 && (
                 <div className="flex justify-between text-gray-600">
-                  <span>DISCOUNT:</span>
+                  <span>{receipt.item_discounts_total && receipt.item_discounts_total > 0 ? 'ORDER DISCOUNT:' : 'DISCOUNT:'}</span>
                   <span>-{currency}{receipt.discount_amount.toFixed(2)}</span>
                 </div>
               )}
@@ -415,6 +441,22 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
                   <span>CARD REF:</span>
                   <span>{receipt.card_reference}</span>
                 </div>
+              )}
+              {receipt.payment_method === 'CHEQUE' && (
+                <>
+                  {receipt.cheque_number && (
+                    <div className="flex justify-between text-[9.5px] text-gray-700">
+                      <span>CHEQUE / CHK NO:</span>
+                      <span className="font-mono font-medium">{receipt.cheque_number}</span>
+                    </div>
+                  )}
+                  {receipt.cheque_date && (
+                    <div className="flex justify-between text-[9.5px] text-gray-700">
+                      <span>CHEQUE / PMT DATE:</span>
+                      <span className="font-mono font-medium">{receipt.cheque_date}</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

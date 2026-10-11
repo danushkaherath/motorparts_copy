@@ -413,14 +413,22 @@ export const api = {
       const spendPerPoint = parseFloat(activeSettings.loyalty_spend_per_point || '100') || 100;
       const pointValue = parseFloat(activeSettings.loyalty_point_value || '1.0') || 1.0;
 
-      // Calculate verified subtotal from line items (guarantee unit_price * quantity)
-      const subtotal = Math.round(
-        (payload.items || []).reduce((sum: number, item: any) => {
-          const qty = parseFloat(item.quantity) || 0;
-          const price = parseFloat(item.unit_price) || 0;
-          return sum + Math.round(qty * price * 100) / 100;
-        }, 0) * 100
-      ) / 100;
+      // Calculate verified gross and item discounts from line items
+      let grossSubtotal = 0;
+      let itemDiscountsTotal = 0;
+      (payload.items || []).forEach((item: any) => {
+        const qty = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.unit_price) || 0;
+        const lineGross = Math.round(qty * price * 100) / 100;
+        const lineDisc = Math.max(0, Number(item.discount_amount) || 0);
+        grossSubtotal += lineGross;
+        itemDiscountsTotal += lineDisc;
+      });
+      grossSubtotal = Math.round(grossSubtotal * 100) / 100;
+      itemDiscountsTotal = Math.round(itemDiscountsTotal * 100) / 100;
+
+      // Subtotal after item-level discounts
+      const subtotal = Math.max(0, Math.round((grossSubtotal - itemDiscountsTotal) * 100) / 100);
 
       // Loyalty points redeemed & discount clamping (matches sales.ts logic)
       const rawDiscount = Math.max(0, Number(payload.discount_amount) || 0);
@@ -450,7 +458,8 @@ export const api = {
       const currency = activeSettings.currency_symbol || 'LKR ';
 
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      const orderNumber = `ORD-OFFLINE-${dateStr}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const orderPrefix = payload.order_type === 'WHOLESALE' ? 'WHL-OFFLINE' : 'ORD-OFFLINE';
+      const orderNumber = `${orderPrefix}-${dateStr}-${Math.floor(1000 + Math.random() * 9000)}`;
 
       return {
         success: true,
@@ -461,13 +470,17 @@ export const api = {
           created_at: new Date().toISOString(),
           cashier_name: payload.cashier_name,
           payment_method: payload.payment_method,
+          order_type: payload.order_type || 'RETAIL',
           subtotal: subtotal,
           discount_amount: effectiveDiscount,
+          item_discounts_total: itemDiscountsTotal,
           tax_amount: taxAmount,
           total_amount: totalDue,
           tender_amount: tenderAmount,
           change_amount: changeAmount,
           card_reference: payload.card_reference,
+          cheque_number: payload.cheque_number || null,
+          cheque_date: payload.cheque_date || null,
           customer_id: payload.customer_id || null,
           customer_name: payload.customer_name || null,
           customer_phone: payload.customer_phone || null,

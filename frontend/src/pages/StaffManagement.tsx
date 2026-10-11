@@ -484,14 +484,14 @@ export const StaffManagement: React.FC<StaffManagementProps> = ({
                   <div className="flex items-center gap-1.5 text-[10px] shrink-0">
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, permissions: ['pos'] })}
+                      onClick={() => setFormData({ ...formData, permissions: ['pos', 'wholesale'] })}
                       className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 font-semibold transition cursor-pointer"
                     >
                       Cashier
                     </button>
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, permissions: ['pos', 'inventory', 'customers', 'shifts', 'reports'] })}
+                      onClick={() => setFormData({ ...formData, permissions: ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'] })}
                       className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold transition cursor-pointer"
                     >
                       Supervisor

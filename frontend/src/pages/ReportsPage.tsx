@@ -91,6 +91,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
     csv += `Average Order Value,${s.aov}\n`;
     csv += `Cash Revenue,${s.cash_revenue}\n`;
     csv += `Card Revenue,${s.card_revenue}\n`;
+    csv += `Cheque Revenue,${s.cheque_revenue || 0}\n`;
     csv += `Discounts Given,${s.discounts}\n\n`;
 
     csv += `CATEGORY BREAKDOWN\n`;
@@ -147,10 +148,11 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
   const maxTrendRevenue = Math.max(1, ...timelineTrend.map((t: any) => Number(t.revenue || 0)));
   const maxHourlyOrders = Math.max(1, ...hourlyTraffic.map((h: any) => Number(h.orders_count || 0)));
 
-  // Cash vs Card ratio
-  const totalTender = (Number(summary.cash_revenue || 0) + Number(summary.card_revenue || 0)) || 1;
+  // Cash vs Card vs Cheque ratio
+  const totalTender = (Number(summary.cash_revenue || 0) + Number(summary.card_revenue || 0) + Number(summary.cheque_revenue || 0)) || 1;
   const cashPercent = Math.round((Number(summary.cash_revenue || 0) / totalTender) * 100);
-  const cardPercent = 100 - cashPercent;
+  const cardPercent = Math.round((Number(summary.card_revenue || 0) / totalTender) * 100);
+  const chequePercent = Math.max(0, 100 - cashPercent - cardPercent);
   return (
     <div className="flex-1 flex flex-col h-full bg-slate-950 p-3 sm:p-6 overflow-y-auto">
       <div className="max-w-7xl mx-auto w-full space-y-4 sm:space-y-6 pb-16">
@@ -384,6 +386,19 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
               </div>
             </div>
 
+            {/* Cheque */}
+            {Number(summary.cheque_revenue || 0) > 0 && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-3 h-3 rounded-full bg-purple-400" />
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Cheques</span>
+                  <span className="font-mono font-bold text-purple-400 text-sm">
+                    {currency}{Number(summary.cheque_revenue || 0).toFixed(2)} ({chequePercent}%)
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Discounts */}
             {Number(summary.discounts || 0) > 0 && (
               <div className="hidden sm:block">
@@ -404,9 +419,16 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
             />
             <div 
               style={{ width: `${cardPercent}%` }} 
-              className="bg-blue-500 rounded-r-full transition-all duration-500" 
+              className="bg-blue-500 transition-all duration-500" 
               title={`Card: ${cardPercent}%`}
             />
+            {chequePercent > 0 && (
+              <div 
+                style={{ width: `${chequePercent}%` }} 
+                className="bg-purple-500 rounded-r-full transition-all duration-500" 
+                title={`Cheque: ${chequePercent}%`}
+              />
+            )}
           </div>
         </div>
 

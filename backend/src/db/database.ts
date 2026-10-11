@@ -196,10 +196,24 @@ export async function initDatabase(): Promise<void> {
       tender_amount REAL NOT NULL,
       change_amount REAL DEFAULT 0,
       card_reference TEXT,
+      cheque_number TEXT,
+      cheque_date TEXT,
       status TEXT DEFAULT 'COMPLETED',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  try {
+    await dbRun('ALTER TABLE orders ADD COLUMN cheque_number TEXT');
+  } catch {}
+
+  try {
+    await dbRun('ALTER TABLE orders ADD COLUMN cheque_date TEXT');
+  } catch {}
+
+  try {
+    await dbRun('ALTER TABLE shifts ADD COLUMN cheque_sales REAL DEFAULT 0');
+  } catch {}
 
   await dbRun(`
     CREATE TABLE IF NOT EXISTS order_items (
@@ -222,6 +236,14 @@ export async function initDatabase(): Promise<void> {
 
   try {
     await dbRun('ALTER TABLE order_items ADD COLUMN mrp REAL DEFAULT 0');
+  } catch {}
+
+  try {
+    await dbRun('ALTER TABLE order_items ADD COLUMN discount_amount REAL DEFAULT 0');
+  } catch {}
+
+  try {
+    await dbRun('ALTER TABLE order_items ADD COLUMN discount_percent REAL DEFAULT 0');
   } catch {}
 
   await dbRun(`
@@ -447,6 +469,12 @@ export async function initDatabase(): Promise<void> {
   try {
     await dbRun('ALTER TABLE orders ADD COLUMN points_redeemed REAL DEFAULT 0');
   } catch {}
+  try {
+    await dbRun("ALTER TABLE orders ADD COLUMN order_type TEXT DEFAULT 'RETAIL'");
+  } catch {}
+  try {
+    await dbRun('ALTER TABLE orders ADD COLUMN item_discounts_total REAL DEFAULT 0');
+  } catch {}
 
   try {
     await dbRun('CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id)');
@@ -494,8 +522,8 @@ export async function initDatabase(): Promise<void> {
   setJwtSecret(activeSecret);
 
   // Seed default users if empty
-  const defaultAdminModules = JSON.stringify(['pos', 'inventory', 'grn', 'shifts', 'procurement', 'reports', 'staff', 'settings']);
-  const defaultCashierModules = JSON.stringify(['pos']);
+  const defaultAdminModules = JSON.stringify(['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings']);
+  const defaultCashierModules = JSON.stringify(['pos', 'wholesale']);
 
   const adminUser = await dbGet('SELECT id FROM users WHERE username = ?', ['admin']);
   if (!adminUser) {
@@ -523,11 +551,11 @@ export async function initDatabase(): Promise<void> {
   await dbRun(`
     UPDATE users 
     SET permissions = CASE 
-      WHEN role = 'admin' THEN '["pos","inventory","grn","customers","shifts","procurement","reports","staff","settings"]'
-      WHEN role = 'supervisor' THEN '["pos","inventory","grn","customers","shifts","reports"]'
-      ELSE '["pos"]'
+      WHEN role = 'admin' THEN '["pos","wholesale","catalog","inventory","grn","customers","shifts","procurement","reports","staff","settings"]'
+      WHEN role = 'supervisor' THEN '["pos","wholesale","catalog","inventory","grn","customers","shifts","reports"]'
+      ELSE '["pos","wholesale"]'
     END
-    WHERE permissions IS NULL OR permissions = '' OR permissions = '[]'
+    WHERE permissions IS NULL OR permissions = '' OR permissions = '[]' OR permissions NOT LIKE '%wholesale%'
   `);
 
   // Seed default categories

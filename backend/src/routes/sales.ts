@@ -12,19 +12,22 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
       shift_id,
       cashier_id = 'usr_cashier1',
       cashier_name = 'Cashier 1',
-      payment_method, // 'CASH' or 'CARD'
-      items, // Array<{ product_id, product_name, barcode, unit_price, quantity, subtotal }>
+      payment_method, // 'CASH', 'CARD', or 'CHEQUE'
+      order_type = 'RETAIL', // 'RETAIL' or 'WHOLESALE'
+      items, // Array<{ product_id, product_name, barcode, unit_price, quantity, subtotal, discount_amount, discount_percent }>
       discount_amount = 0,
       tender_amount,
       card_reference = null,
+      cheque_number = null,
+      cheque_date = null,
       customer_id = null,
       customer_name = null,
       customer_phone = null,
       points_redeemed = 0,
     } = req.body;
 
-    if (!payment_method || !['CASH', 'CARD'].includes(payment_method)) {
-      res.status(400).json({ error: 'Valid payment method (CASH or CARD) is required' });
+    if (!payment_method || !['CASH', 'CARD', 'CHEQUE'].includes(payment_method)) {
+      res.status(400).json({ error: 'Valid payment method (CASH, CARD, or CHEQUE) is required' });
       return;
     }
 
@@ -33,7 +36,10 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Validate each line item has positive, finite quantity and non-negative, finite price
+    // Validate each line item has positive, finite quantity, non-negative price, and valid item discount
+    let grossSubtotal = 0;
+    let itemDiscountsTotal = 0;
+
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (!item.product_id) {
@@ -43,6 +49,7 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
       const qty = Number(item.quantity);
       const price = Number(item.unit_price);
       const mrp = item.mrp !== undefined && item.mrp !== null ? Number(item.mrp) : price;
+      const itemDisc = Math.max(0, Number(item.discount_amount) || 0);
 
       if (isNaN(qty) || !isFinite(qty) || qty <= 0) {
         res.status(400).json({ error: `Item "${item.product_name || item.product_id}" has invalid quantity: ${item.quantity}` });
@@ -56,7 +63,25 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
         res.status(400).json({ error: `Item "${item.product_name || item.product_id}" has invalid MRP: ${item.mrp}` });
         return;
       }
+      if (isNaN(itemDisc) || !isFinite(itemDisc) || itemDisc < 0) {
+        res.status(400).json({ error: `Item "${item.product_name || item.product_id}" has invalid item discount: ${item.discount_amount}` });
+        return;
+      }
+
+      const lineGross = Math.round(qty * price * 100) / 100;
+      if (itemDisc > lineGross) {
+        res.status(400).json({
+          error: `Item "${item.product_name || item.product_id}" discount (${itemDisc.toFixed(2)}) cannot exceed line total (${lineGross.toFixed(2)})`
+        });
+        return;
+      }
+
+      grossSubtotal += lineGross;
+      itemDiscountsTotal += itemDisc;
     }
+
+    grossSubtotal = Math.round(grossSubtotal * 100) / 100;
+    itemDiscountsTotal = Math.round(itemDiscountsTotal * 100) / 100;
 
     if (discount_amount !== undefined && (isNaN(Number(discount_amount)) || !isFinite(Number(discount_amount)) || Number(discount_amount) < 0)) {
       res.status(400).json({ error: 'Discount amount must be a non-negative number' });
@@ -79,14 +104,8 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
     const spendPerPoint = parseFloat((await dbGet('SELECT value FROM settings WHERE key = ?', ['loyalty_spend_per_point']))?.value || '100') || 100;
     const pointValue = parseFloat((await dbGet('SELECT value FROM settings WHERE key = ?', ['loyalty_point_value']))?.value || '1.0') || 1.0;
 
-    // Calculate verified subtotal from line items (guarantee unit_price * quantity)
-    const subtotal = Math.round(
-      items.reduce((sum: number, item: any) => {
-        const qty = parseFloat(item.quantity) || 0;
-        const price = parseFloat(item.unit_price) || 0;
-        return sum + Math.round(qty * price * 100) / 100;
-      }, 0) * 100
-    ) / 100;
+    // Subtotal after item-level discounts
+    const subtotal = Math.max(0, Math.round((grossSubtotal - itemDiscountsTotal) * 100) / 100);
     
     let attachedCustomer: any = null;
     let effectivePointsRedeemed = Math.max(0, Number(points_redeemed) || 0);
@@ -138,10 +157,11 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
         `SELECT COUNT(*) as count FROM orders WHERE date(created_at) = date('now')`
       );
       const orderSeq = String((todayOrders?.count || 0) + 1).padStart(4, '0');
-      orderNumber = `ORD-${dateStr}-${orderSeq}`;
+      const orderPrefix = order_type === 'WHOLESALE' ? 'WHL' : 'ORD';
+      orderNumber = `${orderPrefix}-${dateStr}-${orderSeq}`;
       const existingOrder = await dbGet('SELECT id FROM orders WHERE order_number = ?', [orderNumber]);
       if (existingOrder) {
-        orderNumber = `ORD-${dateStr}-${orderSeq}-${Math.floor(1000 + Math.random() * 9000)}`;
+        orderNumber = `${orderPrefix}-${dateStr}-${orderSeq}-${Math.floor(1000 + Math.random() * 9000)}`;
       }
 
       // Save Order
@@ -149,8 +169,10 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
         `INSERT INTO orders (
           id, order_number, shift_id, cashier_id, cashier_name, payment_method, 
           subtotal, discount_amount, tax_amount, total_amount, tender_amount, change_amount, card_reference,
-          customer_id, customer_name, customer_phone, points_earned, points_redeemed
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          cheque_number, cheque_date,
+          customer_id, customer_name, customer_phone, points_earned, points_redeemed,
+          order_type, item_discounts_total
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           orderId,
           orderNumber,
@@ -165,11 +187,15 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
           tender,
           changeAmount,
           card_reference,
+          cheque_number || null,
+          cheque_date || null,
           customer_id || null,
           attachedCustomer ? attachedCustomer.name : (customer_name || null),
           attachedCustomer ? attachedCustomer.phone : (customer_phone || null),
           pointsEarned,
           effectivePointsRedeemed,
+          order_type,
+          itemDiscountsTotal,
         ]
       );
 
@@ -194,9 +220,16 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
       for (const item of items) {
         const itemId = 'item_' + uuidv4().slice(0, 8);
         const calculatedMrp = Number(item.mrp || item.unit_price || 0);
+        const itemDisc = Math.max(0, Number(item.discount_amount) || 0);
+        const itemDiscPct = Math.max(0, Number(item.discount_percent) || 0);
+        const lineGross = Math.round(Number(item.unit_price) * Number(item.quantity) * 100) / 100;
+        const lineSubtotal = Math.max(0, Math.round((lineGross - itemDisc) * 100) / 100);
+
         await dbRun(
-          `INSERT INTO order_items (id, order_id, product_id, product_name, barcode, unit_price, quantity, subtotal, mrp, batch_number)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO order_items (
+            id, order_id, product_id, product_name, barcode, unit_price, quantity, subtotal, mrp, batch_number,
+            discount_amount, discount_percent
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             itemId,
             orderId,
@@ -205,9 +238,11 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
             item.barcode,
             Number(item.unit_price),
             Number(item.quantity),
-            Math.round(Number(item.unit_price) * Number(item.quantity) * 100) / 100,
+            lineSubtotal,
             calculatedMrp,
             item.batch_number || null,
+            itemDisc,
+            itemDiscPct,
           ]
         );
 
@@ -245,10 +280,18 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
                WHERE id = ?`,
               [totalAmount, totalAmount, totalAmount, shift_id]
             );
-          } else {
+          } else if (payment_method === 'CARD') {
             await dbRun(
               `UPDATE shifts SET 
                 card_sales = card_sales + ?, 
+                total_sales = total_sales + ?
+               WHERE id = ?`,
+              [totalAmount, totalAmount, shift_id]
+            );
+          } else if (payment_method === 'CHEQUE') {
+            await dbRun(
+              `UPDATE shifts SET 
+                cheque_sales = COALESCE(cheque_sales, 0) + ?, 
                 total_sales = total_sales + ?
                WHERE id = ?`,
               [totalAmount, totalAmount, shift_id]
@@ -282,12 +325,16 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
         tender_amount: tender,
         change_amount: changeAmount,
         card_reference,
+        cheque_number: cheque_number || null,
+        cheque_date: cheque_date || null,
         customer_id: customer_id || null,
         customer_name: attachedCustomer ? attachedCustomer.name : (customer_name || null),
         customer_phone: attachedCustomer ? attachedCustomer.phone : (customer_phone || null),
         points_earned: pointsEarned,
         points_redeemed: effectivePointsRedeemed,
         customer_points_balance: customerPointsBalance,
+        order_type,
+        item_discounts_total: itemDiscountsTotal,
         items,
       },
       receipt_config: {
@@ -428,10 +475,18 @@ salesRouter.post('/:orderId/void', async (req: Request, res: Response): Promise<
                WHERE id = ?`,
               [freshOrder.total_amount, freshOrder.total_amount, freshOrder.total_amount, freshOrder.shift_id]
             );
-          } else {
+          } else if (freshOrder.payment_method === 'CARD') {
             await dbRun(
               `UPDATE shifts SET 
                 card_sales = MAX(0, card_sales - ?),
+                total_sales = MAX(0, total_sales - ?)
+               WHERE id = ?`,
+              [freshOrder.total_amount, freshOrder.total_amount, freshOrder.shift_id]
+            );
+          } else if (freshOrder.payment_method === 'CHEQUE') {
+            await dbRun(
+              `UPDATE shifts SET 
+                cheque_sales = MAX(0, COALESCE(cheque_sales, 0) - ?),
                 total_sales = MAX(0, total_sales - ?)
                WHERE id = ?`,
               [freshOrder.total_amount, freshOrder.total_amount, freshOrder.shift_id]

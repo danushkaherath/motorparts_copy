@@ -50,6 +50,10 @@ export interface CartItem {
   batch_id?: string;
   expiry_date?: string;
   stock_quantity?: number;
+  discount_type?: 'amount' | 'percent';
+  discount_value?: number;
+  discount_amount?: number;
+  discount_percent?: number;
 }
 
 export interface OrderReceipt {
@@ -57,14 +61,18 @@ export interface OrderReceipt {
   order_number: string;
   created_at: string;
   cashier_name: string;
-  payment_method: 'CASH' | 'CARD';
+  payment_method: 'CASH' | 'CARD' | 'CHEQUE';
+  order_type?: 'RETAIL' | 'WHOLESALE';
   subtotal: number;
   discount_amount: number;
+  item_discounts_total?: number;
   tax_amount: number;
   total_amount: number;
   tender_amount: number;
   change_amount: number;
   card_reference?: string;
+  cheque_number?: string;
+  cheque_date?: string;
   items: CartItem[];
   customer_id?: string;
   customer_name?: string;
@@ -99,6 +107,7 @@ export interface Shift {
   actual_cash?: number;
   cash_sales: number;
   card_sales: number;
+  cheque_sales?: number;
   total_sales: number;
   status: 'open' | 'closed';
   notes?: string;
@@ -234,7 +243,7 @@ export interface CreateGrnPayload {
   }>;
 }
 
-export type AppModule = 'pos' | 'catalog' | 'inventory' | 'grn' | 'customers' | 'shifts' | 'procurement' | 'reports' | 'staff' | 'settings';
+export type AppModule = 'pos' | 'wholesale' | 'catalog' | 'inventory' | 'grn' | 'customers' | 'shifts' | 'procurement' | 'reports' | 'staff' | 'settings';
 
 export interface User {
   id: string;
@@ -256,9 +265,16 @@ export const AVAILABLE_MODULES: ModuleDefinition[] = [
   {
     id: 'pos',
     name: 'POS Cashier',
-    description: 'Counter billing, barcode scanning, cart management, and payment processing.',
+    description: 'Counter retail billing, barcode scanning, cart management, and payment processing.',
     iconName: 'ShoppingCart',
     badgeColor: 'emerald',
+  },
+  {
+    id: 'wholesale',
+    name: 'Wholesale POS',
+    description: 'Wholesale & B2B trade billing with item-by-item discounts and overall cart discounts.',
+    iconName: 'Building2',
+    badgeColor: 'indigo',
   },
   {
     id: 'catalog',
