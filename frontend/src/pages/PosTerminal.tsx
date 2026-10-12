@@ -797,12 +797,12 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
         </span>
       </div>
 
-      {/* Live Customer Savings Banner */}
+      {/* Live Customer Discount Banner */}
       {totalCustomerSavings > 0 && (
         <div className="p-3 rounded-xl bg-emerald-950/70 border border-emerald-500/50 flex items-center justify-between shadow-lg shrink-0 animate-in fade-in mb-3">
           <div>
-            <span className="font-extrabold text-xs text-emerald-300 block font-sans">ඔබ ලැබූ ලාභය</span>
-            <span className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider">Customer Total Savings</span>
+            <span className="font-extrabold text-xs text-emerald-300 block font-sans">DISCOUNT</span>
+            <span className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider">Total Customer Discount</span>
           </div>
           <span className="text-base font-black text-emerald-300 font-mono">
             {currency}{totalCustomerSavings.toFixed(2)}

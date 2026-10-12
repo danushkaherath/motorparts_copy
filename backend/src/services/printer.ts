@@ -138,8 +138,8 @@ export const printerService = {
       receipt,
       settings: settings || {},
       labels: {
-        total_savings_title: 'ඔබ ලැබූ ලාභය',
-        item_savings: 'ලාභය',
+        total_savings_title: 'TOTAL DISCOUNT',
+        item_savings: 'DISCOUNT',
       },
       image_base64,
       image_path,

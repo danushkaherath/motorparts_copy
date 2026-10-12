@@ -370,7 +370,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
                       <div className="flex justify-between items-center text-[9.5px] text-gray-600 font-light pt-0.5">
                         <span>MRP: {currency}{mrp.toFixed(2)}</span>
                         <span className="text-gray-900 font-normal">
-                          ලාභය: {currency}{itemSavings.toFixed(2)}
+                          DISCOUNT: {currency}{itemSavings.toFixed(2)}
                         </span>
                       </div>
                     )}
@@ -409,14 +409,14 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
               </div>
             </div>
 
-            {/* PROMINENT CUSTOMER SAVINGS BANNER (SINHALA: ඔබ ලැබූ ලාභය) */}
+            {/* PROMINENT TOTAL DISCOUNT BANNER */}
             {totalSavings > 0 && (
               <div className="my-2.5 p-2 border border-dashed border-gray-700 text-center bg-gray-50 print:bg-white">
-                <div className="font-semibold text-xs tracking-wide text-gray-900 leading-tight">
-                  *** ඔබ ලැබූ ලාභය ***
+                <div className="font-semibold text-xs tracking-wider text-gray-900 leading-tight">
+                  *** TOTAL DISCOUNT ***
                 </div>
                 <div className="text-[9.5px] uppercase font-light tracking-wider text-gray-600">
-                  YOUR TOTAL SAVINGS
+                  SPECIAL DISCOUNT APPLIED
                 </div>
                 <div className="text-sm font-semibold mt-0.5 text-gray-900">
                   {currency}{totalSavings.toFixed(2)}

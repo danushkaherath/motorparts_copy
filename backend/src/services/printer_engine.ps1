@@ -561,9 +561,9 @@ if ($Action -eq "print") {
             $bannerRect = New-Object System.Drawing.RectangleF(2, $y, ($printableWidth - 4), $bannerHeight)
             $g.DrawRectangle($dashPen, $bannerRect.X, $bannerRect.Y, $bannerRect.Width, $bannerRect.Height)
 
-            $bannerTitle = if ($labels -and $labels.total_savings_title) { $labels.total_savings_title } else { "TOTAL SAVINGS" }
+            $bannerTitle = if ($labels -and $labels.total_savings_title) { $labels.total_savings_title } else { "TOTAL DISCOUNT" }
             $g.DrawString("*** " + $bannerTitle + " ***", $fontBold, $brush, (New-Object System.Drawing.RectangleF(0, ($y + 5), $printableWidth, 14)), $centerFormat)
-            $g.DrawString("YOUR TOTAL SAVINGS", $fontSmall, $brush, (New-Object System.Drawing.RectangleF(0, ($y + 20), $printableWidth, 14)), $centerFormat)
+            $g.DrawString("SPECIAL DISCOUNT APPLIED", $fontSmall, $brush, (New-Object System.Drawing.RectangleF(0, ($y + 20), $printableWidth, 14)), $centerFormat)
             $g.DrawString($currency + $grandSavings.ToString("0.00"), $fontSavingsBig, $brush, (New-Object System.Drawing.RectangleF(0, ($y + 34), $printableWidth, 18)), $centerFormat)
             $y += $bannerHeight + 12
         }
