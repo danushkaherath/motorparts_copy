@@ -26,14 +26,19 @@ export function App() {
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(() => {
     try {
+      const sessionSaved = sessionStorage.getItem('pos_user');
+      if (sessionSaved) {
+        const parsed = JSON.parse(sessionSaved);
+        if (parsed?.username) return parsed;
+      }
       const localSaved = localStorage.getItem('pos_user');
       if (localSaved) {
         const parsed = JSON.parse(localSaved);
-        // Never allow admin or supervisor role to persist in localStorage across sessions/reloads
-        if (parsed?.role === 'admin' || parsed?.role === 'supervisor') {
-          localStorage.removeItem('pos_user');
-        } else if (parsed?.role === 'cashier') {
+        // Clear legacy default cashier1 so owner is used
+        if (parsed?.username && parsed.username !== 'cashier1') {
           return parsed;
+        } else {
+          localStorage.removeItem('pos_user');
         }
       }
     } catch {}
@@ -41,7 +46,7 @@ export function App() {
       sessionStorage.removeItem('pos_user');
     } catch {}
     localStorage.setItem('pos_locked', 'true');
-    return { id: 'usr_cashier1', username: 'cashier1', role: 'cashier' };
+    return { id: 'usr_owner', username: 'owner', role: 'admin' };
   });
 
   // Strict POS terminal lock - always start locked on boot or refresh for security
@@ -66,7 +71,7 @@ export function App() {
     if (settings?.store_name && settings.store_name.trim()) {
       document.title = `${settings.store_name.trim()} - POS Terminal`;
     } else {
-      document.title = 'Grocery POS Terminal';
+      document.title = 'Motor Parts POS Terminal';
     }
   }, [settings?.store_name]);
 
@@ -91,7 +96,7 @@ export function App() {
     try {
       const [appSettings, shift] = await Promise.all([
         api.getSettings(),
-        api.getCurrentShift(currentUser?.id || 'usr_cashier1'),
+        api.getCurrentShift(currentUser?.id || 'usr_owner'),
       ]);
       setSettings(appSettings);
       setActiveShift(shift);
@@ -121,7 +126,7 @@ export function App() {
   };
 
   const handleLogout = () => {
-    const defaultUser = { id: 'usr_cashier1', username: 'cashier1', role: 'cashier' };
+    const defaultUser = { id: 'usr_owner', username: 'owner', role: 'admin' };
     setCurrentUser(defaultUser);
     try {
       localStorage.removeItem('pos_user');

@@ -420,8 +420,8 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
       setIsCashModalOpen(false);
       const payload = {
         shift_id: activeShift?.id || null,
-        cashier_id: activeShift?.cashier_id || 'usr_cashier1',
-        cashier_name: activeShift?.cashier_name || 'Cashier 1',
+        cashier_id: activeShift?.cashier_id || currentUser?.id || 'usr_owner',
+        cashier_name: activeShift?.cashier_name || currentUser?.username || 'owner',
         payment_method: 'CASH',
         order_type: isWholesale ? 'WHOLESALE' : 'RETAIL',
         items: cart,
@@ -454,8 +454,8 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
       setIsCardModalOpen(false);
       const payload = {
         shift_id: activeShift?.id || null,
-        cashier_id: activeShift?.cashier_id || 'usr_cashier1',
-        cashier_name: activeShift?.cashier_name || 'Cashier 1',
+        cashier_id: activeShift?.cashier_id || currentUser?.id || 'usr_owner',
+        cashier_name: activeShift?.cashier_name || currentUser?.username || 'owner',
         payment_method: 'CARD',
         order_type: isWholesale ? 'WHOLESALE' : 'RETAIL',
         items: cart,
@@ -489,8 +489,8 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
       setIsChequeModalOpen(false);
       const payload = {
         shift_id: activeShift?.id || null,
-        cashier_id: activeShift?.cashier_id || 'usr_cashier1',
-        cashier_name: activeShift?.cashier_name || 'Cashier 1',
+        cashier_id: activeShift?.cashier_id || currentUser?.id || 'usr_owner',
+        cashier_name: activeShift?.cashier_name || currentUser?.username || 'owner',
         payment_method: 'CHEQUE',
         order_type: isWholesale ? 'WHOLESALE' : 'RETAIL',
         items: cart,
@@ -1601,7 +1601,7 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
               </span>
               <span className="text-slate-600 hidden sm:inline">•</span>
               <span className="text-slate-400 text-[11px] sm:text-xs">
-                Cashier: <strong className="text-slate-200">{currentUser?.username || 'cashier1'}</strong>
+                Cashier: <strong className="text-slate-200">{currentUser?.username || 'owner'}</strong>
               </span>
               <span className="text-slate-600 hidden md:inline">•</span>
               <span className="text-slate-400 hidden md:inline text-[11px] sm:text-xs">

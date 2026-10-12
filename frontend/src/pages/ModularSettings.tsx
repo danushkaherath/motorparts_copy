@@ -196,7 +196,7 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
               Store name, currency, tax rates, and modular switchboard features can only be altered by an <strong>Administrator</strong>. Cashiers and non-admin staff cannot view or edit these settings.
             </p>
             <div className="mt-3 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] text-slate-400 inline-block font-mono">
-              Current User: <strong className="text-slate-200">{currentUser?.username || 'cashier1'}</strong> ({currentUser?.role?.toUpperCase() || 'CASHIER'})
+              Current User: <strong className="text-slate-200">{currentUser?.username || 'owner'}</strong> ({currentUser?.role?.toUpperCase() || 'ADMIN'})
             </div>
           </div>
 

@@ -88,8 +88,8 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
         return;
       }
 
-      const cashierId = currentUser?.id || 'usr_cashier1';
-      const cName = cashierName.trim() || currentUser?.username || 'Cashier 1';
+      const cashierId = currentUser?.id || 'usr_owner';
+      const cName = cashierName.trim() || currentUser?.username || 'owner';
 
       const newShift = await api.startShift(cashierId, cName, floatNum);
       onShiftUpdated(newShift);

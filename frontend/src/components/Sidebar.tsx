@@ -257,7 +257,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!collapsed && (
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-200 truncate leading-tight">
-                {currentUser?.username || 'cashier1'}
+                {currentUser?.username || 'owner'}
               </p>
               <span className={`text-[9px] px-1.5 py-0.2 rounded font-black uppercase tracking-wide inline-block mt-0.5 ${
                 isAdmin

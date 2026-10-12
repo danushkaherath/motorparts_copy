@@ -75,9 +75,9 @@ export const StaffManagement: React.FC<StaffManagementProps> = ({
   };
 
   const toggleModule = (modId: AppModule) => {
-    // If editing the main admin account and trying to deselect staff or settings, prevent lockout
-    if ((editingUser?.id === 'usr_admin' || editingUser?.username === 'admin') && (modId === 'staff' || modId === 'settings')) {
-      alert('The primary administrator must retain Staff & Access Control and Settings permissions to prevent system lockout.');
+    // If editing the main admin/owner account and trying to deselect staff or settings, prevent lockout
+    if ((editingUser?.id === 'usr_admin' || editingUser?.username === 'admin' || editingUser?.id === 'usr_owner' || editingUser?.username === 'owner') && (modId === 'staff' || modId === 'settings')) {
+      alert('The primary administrator/owner must retain Staff & Access Control and Settings permissions to prevent system lockout.');
       return;
     }
 
@@ -177,7 +177,7 @@ export const StaffManagement: React.FC<StaffManagementProps> = ({
               Staff accounts, cashiers, supervisors, and authentication PINs can only be managed by an <strong>Administrator</strong>.
             </p>
             <div className="mt-3 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] text-slate-400 inline-block font-mono">
-              Current User: <strong className="text-slate-200">{currentUser?.username || 'cashier1'}</strong> ({currentUser?.role?.toUpperCase() || 'CASHIER'})
+              Current User: <strong className="text-slate-200">{currentUser?.username || 'owner'}</strong> ({currentUser?.role?.toUpperCase() || 'ADMIN'})
             </div>
           </div>
 
@@ -510,7 +510,7 @@ export const StaffManagement: React.FC<StaffManagementProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
                   {AVAILABLE_MODULES.map((mod) => {
                     const isChecked = formData.permissions.includes(mod.id);
-                    const isMainAdminRequired = (editingUser?.id === 'usr_admin' || editingUser?.username === 'admin') && (mod.id === 'staff' || mod.id === 'settings');
+                    const isMainAdminRequired = (editingUser?.id === 'usr_admin' || editingUser?.username === 'admin' || editingUser?.id === 'usr_owner' || editingUser?.username === 'owner') && (mod.id === 'staff' || mod.id === 'settings');
 
                     return (
                       <div

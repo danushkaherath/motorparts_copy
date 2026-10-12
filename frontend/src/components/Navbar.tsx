@@ -293,7 +293,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <User className="w-3.5 h-3.5 text-blue-400" />
             )}
-            <span className="font-bold text-slate-200">{currentUser?.username || 'cashier1'}</span>
+            <span className="font-bold text-slate-200">{currentUser?.username || 'owner'}</span>
             <span className={`text-[9px] px-1.5 py-0.2 rounded font-black uppercase tracking-wide ${
               isAdmin
                 ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'

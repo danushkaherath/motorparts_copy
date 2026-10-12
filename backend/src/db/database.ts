@@ -536,6 +536,17 @@ export async function initDatabase(): Promise<void> {
     ]);
   }
 
+  const ownerUser = await dbGet('SELECT id FROM users WHERE username = ?', ['owner']);
+  if (!ownerUser) {
+    await dbRun('INSERT INTO users (id, username, pin, role, permissions) VALUES (?, ?, ?, ?, ?)', [
+      'usr_owner',
+      'owner',
+      '1234',
+      'admin',
+      defaultAdminModules,
+    ]);
+  }
+
   const cashierUser = await dbGet('SELECT id FROM users WHERE username = ?', ['cashier1']);
   if (!cashierUser) {
     await dbRun('INSERT INTO users (id, username, pin, role, permissions) VALUES (?, ?, ?, ?, ?)', [

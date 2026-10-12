@@ -10,8 +10,8 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
   try {
     const {
       shift_id,
-      cashier_id = 'usr_cashier1',
-      cashier_name = 'Cashier 1',
+      cashier_id = 'usr_owner',
+      cashier_name = 'owner',
       payment_method, // 'CASH', 'CARD', or 'CHEQUE'
       order_type = 'RETAIL', // 'RETAIL' or 'WHOLESALE'
       items, // Array<{ product_id, product_name, barcode, unit_price, quantity, subtotal, discount_amount, discount_percent }>
