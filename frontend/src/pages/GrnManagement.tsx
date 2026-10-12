@@ -1802,7 +1802,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Ceylon Agro Distributors"
+                    placeholder="e.g. Apex Racing & Performance Distributors"
                     value={newSupplierForm.name}
                     onChange={(e) => setNewSupplierForm({ ...newSupplierForm, name: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden"
@@ -1812,7 +1812,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                   <label className="block text-xs font-semibold text-slate-400 mb-1">Contact Person</label>
                   <input
                     type="text"
-                    placeholder="e.g. Mr. Samantha Perera"
+                    placeholder="e.g. Saman Jayasinghe"
                     value={newSupplierForm.contact_name}
                     onChange={(e) => setNewSupplierForm({ ...newSupplierForm, contact_name: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden"
@@ -1832,7 +1832,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                   <label className="block text-xs font-semibold text-slate-400 mb-1">Address / Warehouse</label>
                   <input
                     type="text"
-                    placeholder="e.g. 45 Industrial Zone, Kaduwela"
+                    placeholder="e.g. 45 High Level Road, Pannipitiya"
                     value={newSupplierForm.address}
                     onChange={(e) => setNewSupplierForm({ ...newSupplierForm, address: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden"
@@ -2125,7 +2125,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                   required
                   value={quickProductForm.name}
                   onChange={(e) => setQuickProductForm({ ...quickProductForm, name: e.target.value })}
-                  placeholder="e.g. Anchor Full Cream Milk Powder 400g"
+                  placeholder="e.g. Brembo GT 6-Piston Big Brake Caliper Kit"
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden"
                 />
               </div>
@@ -2137,7 +2137,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                     type="text"
                     value={quickProductForm.brand}
                     onChange={(e) => setQuickProductForm({ ...quickProductForm, brand: e.target.value })}
-                    placeholder="Brand / Manufacturer"
+                    placeholder="e.g. Brembo, HKS, Turbosmart"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden"
                   />
                 </div>

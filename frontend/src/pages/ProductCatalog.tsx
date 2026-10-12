@@ -580,7 +580,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
                     type="text"
                     value={stockForm.shelf_location}
                     onChange={(e) => setStockForm({ ...stockForm, shelf_location: e.target.value })}
-                    placeholder="e.g. Aisle 3, Rack B"
+                    placeholder="e.g. Bay 2, Rack C-04"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white outline-hidden focus:border-emerald-500"
                   />
                 </div>
@@ -589,13 +589,13 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-300 font-semibold mb-1">
-                    Batch Number (Optional)
+                    Batch / Lot Number (Optional)
                   </label>
                   <input
                     type="text"
                     value={stockForm.batch_number}
                     onChange={(e) => setStockForm({ ...stockForm, batch_number: e.target.value })}
-                    placeholder="e.g. B-901"
+                    placeholder="e.g. LOT-2026-X"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white font-mono outline-hidden focus:border-emerald-500"
                   />
                 </div>
@@ -681,7 +681,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
                   required
                   value={editingProduct.name || ''}
                   onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                  placeholder="e.g. Maliban Gold Marie 400g"
+                  placeholder="e.g. HKS Hi-Power Exhaust Muffler 76mm"
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white outline-hidden focus:border-blue-400"
                 />
               </div>
@@ -693,7 +693,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
                     type="text"
                     value={editingProduct.brand || ''}
                     onChange={(e) => setEditingProduct({ ...editingProduct, brand: e.target.value })}
-                    placeholder="e.g. Maliban, Anchor"
+                    placeholder="e.g. Brembo, HKS, Motul, BC Racing"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white outline-hidden focus:border-blue-400"
                   />
                 </div>

@@ -819,17 +819,17 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
                     type="text"
                     value={adjustData.shelf_location}
                     onChange={(e) => setAdjustData({ ...adjustData, shelf_location: e.target.value })}
-                    placeholder="e.g. Aisle 2"
+                    placeholder="e.g. Bay 1, Rack A"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white outline-hidden focus:border-amber-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Batch Number</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Batch / Lot Number</label>
                   <input
                     type="text"
                     value={adjustData.batch_number}
                     onChange={(e) => setAdjustData({ ...adjustData, batch_number: e.target.value })}
-                    placeholder="e.g. B-101"
+                    placeholder="e.g. LOT-2026-X"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white font-mono outline-hidden focus:border-amber-400"
                   />
                 </div>
@@ -1033,12 +1033,12 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Shelf / Aisle Location</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Shelf / Bay Location</label>
                     <input
                       type="text"
                       value={catalogStockForm.shelf_location}
                       onChange={(e) => setCatalogStockForm({ ...catalogStockForm, shelf_location: e.target.value })}
-                      placeholder="e.g. Aisle 3, Bin 12"
+                      placeholder="e.g. Bay 3, Bin 12"
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white outline-hidden focus:border-amber-400"
                     />
                   </div>
@@ -1046,12 +1046,12 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Batch Number</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Batch / Lot Number</label>
                     <input
                       type="text"
                       value={catalogStockForm.batch_number}
                       onChange={(e) => setCatalogStockForm({ ...catalogStockForm, batch_number: e.target.value })}
-                      placeholder="e.g. B-202"
+                      placeholder="e.g. LOT-2026-X"
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white font-mono outline-hidden focus:border-amber-400"
                     />
                   </div>
