@@ -117,7 +117,7 @@ export const SubscriptionLockOverlay: React.FC<SubscriptionLockOverlayProps> = (
               <Store className="w-3.5 h-3.5 text-slate-500" />
               Client Store:
             </span>
-            <strong className="text-white font-semibold">{settings?.store_name || 'FreshMart POS'}</strong>
+            <strong className="text-white font-semibold">{settings?.store_name || 'MotorParts POS'}</strong>
           </div>
 
           <div className="flex items-center justify-between text-slate-400">

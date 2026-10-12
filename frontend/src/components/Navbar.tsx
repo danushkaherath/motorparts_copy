@@ -131,7 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
             <ShoppingBag className="w-5 h-5" />
           </div>
-          <span>{settings?.store_name || 'FreshMart POS'}</span>
+          <span>{settings?.store_name || 'MotorParts POS'}</span>
         </div>
 
         <nav className="flex items-center gap-1">

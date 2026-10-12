@@ -1257,7 +1257,7 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
                   </thead>
                   <tbody className="divide-y divide-[#152033] text-xs md:text-sm">
                     {cart.map((item, index) => {
-                      const unitLabel = item.unit === 'kg' ? '1000 G' : item.unit === 'g' ? '500 G' : item.unit ? item.unit.toUpperCase() : 'PCS';
+                      const unitLabel = (item.unit || 'pcs').toUpperCase();
                       return (
                         <tr key={`${item.product_id}_${item.batch_id || item.batch_number || index}`} className="hover:bg-[#111928]/60 transition group">
                           
@@ -1453,7 +1453,7 @@ export const PosTerminal: React.FC<PosTerminalProps> = ({
               {/* Mobile Item Card List (Screens < sm) */}
               <div className="sm:hidden flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2">
                 {cart.map((item, index) => {
-                  const unitLabel = item.unit === 'kg' ? '1000 G' : item.unit === 'g' ? '500 G' : item.unit ? item.unit.toUpperCase() : 'PCS';
+                  const unitLabel = (item.unit || 'pcs').toUpperCase();
                   return (
                     <div 
                       key={`m_item_${item.product_id}_${item.batch_id || item.batch_number || index}`}

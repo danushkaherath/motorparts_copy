@@ -430,7 +430,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <ShoppingBag className="w-4 h-4" />
             </div>
             <span className="truncate text-base font-extrabold tracking-tight text-white">
-              {settings?.store_name || 'FreshMart POS'}
+              {settings?.store_name || 'MotorParts POS'}
             </span>
           </div>
           <button
@@ -477,7 +477,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => {
                 if (hasModuleAccess('pos')) handleSelectTab('pos');
               }}
-              title={settings?.store_name || 'FreshMart POS'}
+              title={settings?.store_name || 'MotorParts POS'}
               className="flex items-center gap-2.5 cursor-pointer font-bold text-emerald-400 tracking-tight hover:opacity-90 transition min-w-0"
             >
               <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-inner">
@@ -485,7 +485,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               {!isCollapsed && (
                 <span className="truncate text-base font-extrabold tracking-tight text-white">
-                  {settings?.store_name || 'FreshMart POS'}
+                  {settings?.store_name || 'MotorParts POS'}
                 </span>
               )}
             </div>

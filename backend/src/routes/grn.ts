@@ -655,7 +655,7 @@ grnRouter.get('/:id', async (req: Request, res: Response): Promise<void> => {
     // Fetch store configuration for printable report
     const storeName =
       (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_name']))?.value ||
-      'FreshMart Supermarket';
+      'MotorParts & Tuning Studio';
     const storeAddress =
       (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_address']))?.value || '';
     const storePhone =

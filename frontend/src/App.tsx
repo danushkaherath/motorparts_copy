@@ -188,7 +188,7 @@ export function App() {
               <ShoppingBag className="w-4 h-4" />
             </div>
             <span className="font-extrabold text-white text-sm tracking-tight truncate max-w-[150px] sm:max-w-[220px]">
-              {settings?.store_name || 'FreshMart POS'}
+              {settings?.store_name || 'MotorParts POS'}
             </span>
           </div>
         </div>

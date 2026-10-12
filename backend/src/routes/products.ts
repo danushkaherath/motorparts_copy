@@ -136,6 +136,42 @@ productsRouter.get('/categories', async (req: Request, res: Response): Promise<v
   }
 });
 
+// Create new Category
+productsRouter.post('/categories', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name, color, icon } = req.body;
+    if (!name || !name.trim()) {
+      res.status(400).json({ error: 'Category name is required' });
+      return;
+    }
+    const id = 'cat_' + uuidv4().slice(0, 8);
+    const catColor = color || '#3b82f6';
+    const catIcon = icon || 'Layers';
+    await dbRun('INSERT INTO categories (id, name, color, icon) VALUES (?, ?, ?, ?)', [
+      id,
+      name.trim(),
+      catColor,
+      catIcon,
+    ]);
+    const created = await dbGet('SELECT * FROM categories WHERE id = ?', [id]);
+    res.status(201).json(created);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Category (unlinks products if necessary)
+productsRouter.delete('/categories/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    await dbRun('UPDATE products SET category_id = NULL WHERE category_id = ?', [id]);
+    await dbRun('DELETE FROM categories WHERE id = ?', [id]);
+    res.json({ success: true, message: 'Category deleted' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Search & list products (with server-side pagination and indexing)
 productsRouter.get('/', async (req: Request, res: Response): Promise<void> => {
   try {

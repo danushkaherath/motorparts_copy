@@ -12,7 +12,8 @@ import {
   Building2,
   X,
   Layers,
-  Barcode
+  Barcode,
+  Tag
 } from 'lucide-react';
 import type { Product, AppSettings } from '../types';
 import { api } from '../services/api';
@@ -44,6 +45,9 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
   const [isBulkModalOpen, setIsBulkModalOpen] = useState<boolean>(false);
   const [isWipeModalOpen, setIsWipeModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
+  const [newCatName, setNewCatName] = useState<string>('');
+  const [newCatColor, setNewCatColor] = useState<string>('#3b82f6');
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState<boolean>(false);
   const [batchModalProduct, setBatchModalProduct] = useState<Product | null>(null);
@@ -228,7 +232,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
             <span>Product Master Catalog</span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Master database of all recognized grocery barcodes, names, and retail prices ({totalProducts.toLocaleString()} items total).
+            Master database of performance parts, modification hardware, and vehicle accessories ({totalProducts.toLocaleString()} items total).
           </p>
         </div>
 
@@ -260,6 +264,16 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
           >
             Export Catalog CSV
           </button>
+
+          {canManage && (
+            <button
+              onClick={() => setIsCategoryModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 rounded-xl text-xs font-semibold transition cursor-pointer"
+            >
+              <Tag className="w-4 h-4" />
+              <span>Categories</span>
+            </button>
+          )}
 
           {canManage && (
             <button
@@ -706,15 +720,17 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
                   onChange={(e) => setEditingProduct({ ...editingProduct, unit: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white outline-hidden focus:border-blue-400"
                 >
-                  <option value="pcs">Pieces (pcs)</option>
-                  <option value="kg">Kilograms (kg)</option>
-                  <option value="g">Grams (g)</option>
-                  <option value="l">Liters (l)</option>
-                  <option value="ml">Milliliters (ml)</option>
-                  <option value="packet">Packet (pkt)</option>
-                  <option value="bottle">Bottle (btl)</option>
-                  <option value="box">Box (bx)</option>
-                  <option value="can">Can (can)</option>
+                  <option value="pcs">Pieces (pcs) - Individual Parts / Hardware</option>
+                  <option value="set">Set (set) - Complete Suspension, Bushings or Plugs</option>
+                  <option value="kit">Kit (kit) - Turbo, Big Brake or Intercooler Kits</option>
+                  <option value="pair">Pair (pr) - Front/Rear Lights, Wheel Spacers or Discs</option>
+                  <option value="can">Can (can) - 1L / 4L Engine Oil, Degreaser or Additives</option>
+                  <option value="bottle">Bottle (btl) - Brake Fluid, Coolant or Injector Cleaner</option>
+                  <option value="roll">Roll (roll) - Heat Wrap, Decals, Tint or Vacuum Hoses</option>
+                  <option value="meter">Meter (m) - Braided Fuel Lines or Silicone Tubing</option>
+                  <option value="box">Box (bx) - Fasteners, Gaskets or Clamps</option>
+                  <option value="pack">Pack (pk) - Clip Sets or O-Rings</option>
+                  <option value="l">Liters (L) - Bulk Fluids / Gear Oils</option>
                 </select>
               </div>
 
@@ -787,6 +803,114 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
           products={barcodeProducts}
           settings={settings}
         />
+      )}
+
+      {/* Category Management Modal */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-750 rounded-3xl max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Tag className="w-5 h-5 text-purple-400" />
+                <span>Manage Modification Categories</span>
+              </h2>
+              <button
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Add new Category */}
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newCatName.trim()) return;
+                try {
+                  await api.createCategory({ name: newCatName.trim(), color: newCatColor });
+                  setNewCatName('');
+                  const updated = await api.getCategories();
+                  setCategories(updated);
+                  setNotification(`Category "${newCatName.trim()}" created successfully.`);
+                } catch (err: any) {
+                  alert(err.message || 'Failed to create category');
+                }
+              }}
+              className="mt-4 flex gap-2"
+            >
+              <input
+                type="text"
+                placeholder="New Category Name (e.g. Turbochargers, ECU Tuning)"
+                value={newCatName}
+                onChange={(e) => setNewCatName(e.target.value)}
+                required
+                className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-hidden focus:border-purple-400"
+              />
+              <input
+                type="color"
+                value={newCatColor}
+                onChange={(e) => setNewCatColor(e.target.value)}
+                className="w-10 h-9 p-0.5 rounded-xl border border-slate-700 bg-slate-950 cursor-pointer"
+                title="Category theme color"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-md transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add</span>
+              </button>
+            </form>
+
+            {/* List of categories */}
+            <div className="mt-4 flex-1 overflow-y-auto space-y-2 max-h-72 pr-1 custom-scrollbar">
+              {categories.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs"
+                      style={{ backgroundColor: c.color || '#3b82f6' }}
+                    />
+                    <span className="font-semibold text-white">{c.name}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm(`Delete category "${c.name}"? Products under this category will become Uncategorized.`)) {
+                        try {
+                          await api.deleteCategory(c.id);
+                          const updated = await api.getCategories();
+                          setCategories(updated);
+                          setNotification(`Category "${c.name}" deleted.`);
+                        } catch (err: any) {
+                          alert(err.message || 'Failed to delete category');
+                        }
+                      }
+                    }}
+                    className="p-1 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-slate-850 transition cursor-pointer"
+                    title="Delete category"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4 border-t border-slate-800 flex justify-end mt-4">
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

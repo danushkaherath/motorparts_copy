@@ -1946,10 +1946,10 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
               <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4 mb-6">
                 <div>
                   <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">
-                    {reportStoreConfig?.store_name || settings?.store_name || 'FreshMart Supermarket'}
+                    {reportStoreConfig?.store_name || settings?.store_name || 'MotorParts & Tuning Studio'}
                   </h2>
                   <p className="text-xs text-slate-600 mt-0.5 max-w-sm">
-                    {reportStoreConfig?.store_address || settings?.store_address || '108 Galle Road, Colombo 03'}
+                    {reportStoreConfig?.store_address || settings?.store_address || '420 Speed Avenue, Colombo 05'}
                   </p>
                   <p className="text-xs text-slate-600 font-mono">
                     Tel: {reportStoreConfig?.store_phone || settings?.store_phone || '+94 11 234 5678'}
@@ -2205,6 +2205,27 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden font-mono"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Unit of Measurement</label>
+                <select
+                  value={quickProductForm.unit || 'pcs'}
+                  onChange={(e) => setQuickProductForm({ ...quickProductForm, unit: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden"
+                >
+                  <option value="pcs">Pieces (pcs) - Individual Parts / Hardware</option>
+                  <option value="set">Set (set) - Suspension, Bushings or Plugs</option>
+                  <option value="kit">Kit (kit) - Turbo, Brake or Intercooler Kits</option>
+                  <option value="pair">Pair (pr) - Lights, Spacers or Discs</option>
+                  <option value="can">Can (can) - 1L / 4L Engine Oil or Additives</option>
+                  <option value="bottle">Bottle (btl) - Brake Fluid, Coolant or Cleaners</option>
+                  <option value="roll">Roll (roll) - Heat Wrap, Decals or Vacuum Hoses</option>
+                  <option value="meter">Meter (m) - Fuel Lines or Tubing</option>
+                  <option value="box">Box (bx) - Fasteners or Gaskets</option>
+                  <option value="pack">Pack (pk) - Clip Sets or O-Rings</option>
+                  <option value="l">Liters (L) - Bulk Oils / Fluids</option>
+                </select>
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">

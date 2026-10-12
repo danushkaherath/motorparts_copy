@@ -133,6 +133,41 @@ export const api = {
     }
   },
 
+  async getCategories(hasProducts: boolean = false): Promise<any[]> {
+    try {
+      const qs = hasProducts ? '?has_products=true' : '';
+      const res = await fetch(`${API_BASE}/products/categories${qs}`);
+      if (!res.ok) throw new Error('Failed to fetch categories');
+      return res.json();
+    } catch (err) {
+      console.warn('Network error fetching categories, fallback empty array');
+      return [];
+    }
+  },
+
+  async createCategory(category: { name: string; color?: string; icon?: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/products/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(category),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to create category' }));
+      throw new Error(err.error || 'Failed to create category');
+    }
+    return res.json();
+  },
+
+  async deleteCategory(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/products/categories/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to delete category' }));
+      throw new Error(err.error || 'Failed to delete category');
+    }
+  },
+
   async getQuickPicks(): Promise<Product[]> {
     try {
       const res = await fetch(`${API_BASE}/products/quick-picks`);
