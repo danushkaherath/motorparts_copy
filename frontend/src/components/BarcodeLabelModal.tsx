@@ -7,16 +7,76 @@ import {
   Check, 
   Sliders, 
   Eye, 
-  Sparkles,
-  Layers,
-  Calendar,
-  Building2,
-  DollarSign
+  Sparkles, 
+  Layers, 
+  Calendar, 
+  Building2, 
+  DollarSign,
+  HelpCircle,
+  Scan
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
+import JsBarcode from 'jsbarcode';
 import type { Product, AppSettings } from '../types';
-import { generateCode128Bars } from '../utils/barcode';
 import { api } from '../services/api';
+
+interface BarcodeSvgProps {
+  value: string;
+  width?: number;
+  height?: number;
+  className?: string;
+}
+
+const BarcodeSvg: React.FC<BarcodeSvgProps> = ({
+  value,
+  width = 1.6,
+  height = 30,
+  className = '',
+}) => {
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const clean = String(value || '000000').trim();
+    if (!clean) return;
+
+    try {
+      // Auto-detect format: if exactly 12 or 13 digits, use EAN13
+      let format = 'CODE128';
+      if (/^\d{12,13}$/.test(clean)) {
+        format = 'EAN13';
+      }
+
+      JsBarcode(svgRef.current, clean, {
+        format,
+        width,
+        height,
+        displayValue: false,
+        margin: 4,
+        background: '#ffffff',
+        lineColor: '#000000',
+        flat: true,
+      });
+    } catch {
+      try {
+        JsBarcode(svgRef.current, clean, {
+          format: 'CODE128',
+          width,
+          height,
+          displayValue: false,
+          margin: 4,
+          background: '#ffffff',
+          lineColor: '#000000',
+          flat: true,
+        });
+      } catch (err) {
+        console.error('JsBarcode rendering error:', err);
+      }
+    }
+  }, [value, width, height]);
+
+  return <svg ref={svgRef} className={`shape-crispEdges block max-w-full ${className}`} />;
+};
 
 export interface BarcodeLabelModalProps {
   isOpen: boolean;
@@ -89,6 +149,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
 
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isScannerHelpOpen, setIsScannerHelpOpen] = useState<boolean>(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
   const printAreaRef = useRef<HTMLDivElement>(null);
@@ -101,19 +162,12 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
   const isVeryCompact = activeDim.heightMm <= 22;
   const isCompact = activeDim.heightMm <= 27;
 
-  // Larger barcode width and taller bars as requested
-  const barcodeWidth = isVeryCompact
-    ? Math.min(150, Math.round((activeDim.widthMm - 6) * 3.78))
-    : isCompact
-    ? Math.min(165, Math.round((activeDim.widthMm - 6) * 3.78))
-    : Math.min(185, Math.round((activeDim.widthMm - 8) * 3.78));
+  // Module width (exact pixels per narrowest bar) and bar height for JsBarcode
+  const barcodeBarWidth = isVeryCompact ? 1.4 : isCompact ? 1.6 : 1.8;
+  const barcodeHeight = isVeryCompact ? 20 : isCompact ? 30 : 42;
 
-  // Taller barcode height (significantly enlarged for quick scanning & bold visibility)
-  const barcodeHeight = isVeryCompact ? 18 : isCompact ? 30 : 42;
-
-  // Barcode data computation
+  // Barcode data value
   const barcodeValue = String(currentProduct.barcode || currentProduct.sku || '00000000').trim();
-  const bars = generateCode128Bars(barcodeValue, barcodeWidth);
 
   // Total labels to print
   const totalLabels = products.length * config.copiesPerProduct;
@@ -248,7 +302,6 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
       <div id="barcode-print-container" ref={printAreaRef} className="hidden print:block">
         {products.map((prod, pIdx) => {
           const pBarcode = String(prod.barcode || prod.sku || '00000000').trim();
-          const pBars = generateCode128Bars(pBarcode, barcodeWidth);
           const copies = Array.from({ length: Math.max(1, config.copiesPerProduct) });
 
           return copies.map((_, cIdx) => (
@@ -290,27 +343,13 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                 </div>
               )}
 
-              {/* Barcode Vector Bars - Large prominent size */}
+              {/* Barcode Vector Bars - JsBarcode high-contrast renderer */}
               <div className="w-full flex flex-col items-center justify-center shrink-0 my-0.5">
-                <svg
-                  width={barcodeWidth}
+                <BarcodeSvg
+                  value={pBarcode}
+                  width={barcodeBarWidth}
                   height={barcodeHeight}
-                  viewBox={`0 0 ${barcodeWidth} ${barcodeHeight}`}
-                  className="shape-crispEdges block"
-                  style={{ width: `${barcodeWidth}px`, height: `${barcodeHeight}px`, maxHeight: `${barcodeHeight}px` }}
-                >
-                  <rect width="100%" height="100%" fill="#ffffff" />
-                  {pBars.map((b, i) => (
-                    <rect
-                      key={i}
-                      x={b.x}
-                      y={0}
-                      width={b.width}
-                      height={barcodeHeight}
-                      fill="#000000"
-                    />
-                  ))}
-                </svg>
+                />
                 {config.showBarcodeNumber && (
                   <span className={`font-mono tracking-widest text-black font-bold shrink-0 ${
                     isVeryCompact ? 'text-[6.5px] leading-none mt-0.5' : isCompact ? 'text-[7.5px] leading-none mt-0.5' : 'text-[9px] leading-tight mt-1'
@@ -503,6 +542,21 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                 <div className="leading-snug">
                   <span className="font-bold text-white block">Important Chrome Print Setting for Xprinter:</span>
                   In the Chrome Print dialog, expand <strong className="text-white">More settings</strong> &rarr; set <strong className="text-amber-300">Margins: None</strong> and select <strong className="text-amber-300">Paper size: {activeDim.widthMm}mm × {activeDim.heightMm}mm</strong>. This prevents Chrome from trimming the bottom of your label!
+                </div>
+              </div>
+
+              {/* Scanner Compatibility Tip */}
+              <div className="bg-sky-950/40 border border-sky-500/40 rounded-2xl p-3 flex items-start gap-2.5 text-xs text-sky-200">
+                <Scan className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                <div className="leading-snug space-y-1">
+                  <span className="font-bold text-white block">Scanner Hardware Tip (Code 128 vs EAN-13):</span>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Retail scanners read supermarket products (like the 13-digit chili pack) because scanners have <strong>EAN-13</strong> turned on by default. For custom alphanumeric codes (<code className="text-amber-300 font-mono font-bold">MOD-SUSP-002</code>), standard <strong>Code 128</strong> is used.
+                  </p>
+                  <p className="text-[11px] text-sky-300 leading-relaxed">
+                    &bull; <strong>Test with your phone:</strong> Point Google Lens or camera at this sticker. If your phone scans it immediately, the sticker is 100% valid and your physical barcode gun simply needs <em>Code 128</em> enabled (scan the barcode from its quick manual).<br/>
+                    &bull; <strong>Numeric EAN-13:</strong> You can also assign 13-digit numbers (e.g. <code className="text-amber-300 font-mono font-bold">479001000001</code>) to items, which formats as standard EAN-13 accepted by all scanners out of the box.
+                  </p>
                 </div>
               </div>
 
@@ -770,27 +824,13 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                         </div>
                       )}
 
-                      {/* Barcode Vector Bars - Large prominent size */}
+                      {/* Barcode Vector Bars - JsBarcode high-contrast renderer */}
                       <div className="w-full flex flex-col items-center justify-center shrink-0 my-0.5">
-                        <svg
-                          width={barcodeWidth}
+                        <BarcodeSvg
+                          value={barcodeValue}
+                          width={barcodeBarWidth}
                           height={barcodeHeight}
-                          viewBox={`0 0 ${barcodeWidth} ${barcodeHeight}`}
-                          className="shape-crispEdges block"
-                          style={{ width: `${barcodeWidth}px`, height: `${barcodeHeight}px`, maxHeight: `${barcodeHeight}px` }}
-                        >
-                          <rect width="100%" height="100%" fill="#ffffff" />
-                          {bars.map((b, i) => (
-                            <rect
-                              key={i}
-                              x={b.x}
-                              y={0}
-                              width={b.width}
-                              height={barcodeHeight}
-                              fill="#000000"
-                            />
-                          ))}
-                        </svg>
+                        />
                         {config.showBarcodeNumber && (
                           <span className={`font-mono tracking-widest text-black font-bold shrink-0 ${
                             isVeryCompact ? 'text-[6.5px] leading-none mt-0.5' : isCompact ? 'text-[7.5px] leading-tight mt-0.5' : 'text-[9px] mt-0.5'
