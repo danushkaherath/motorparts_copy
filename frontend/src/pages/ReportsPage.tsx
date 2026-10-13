@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
+  TrendingDown,
   DollarSign, 
   CreditCard, 
   ShoppingBag, 
@@ -86,13 +87,25 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
     csv += `Gross Revenue,${s.gross_revenue}\n`;
     csv += `Estimated COGS,${s.cogs}\n`;
     csv += `Gross Profit,${s.gross_profit}\n`;
-    csv += `Profit Margin %,${s.profit_margin}%\n`;
+    csv += `Gross Profit Margin %,${s.profit_margin}%\n`;
+    csv += `Operating Expenses,${s.total_expenses || 0}\n`;
+    csv += `Net Profit,${s.net_profit !== undefined ? s.net_profit : s.gross_profit}\n`;
+    csv += `Net Profit Margin %,${s.net_profit_margin !== undefined ? s.net_profit_margin : s.profit_margin}%\n`;
     csv += `Total Orders,${s.total_orders}\n`;
     csv += `Average Order Value,${s.aov}\n`;
     csv += `Cash Revenue,${s.cash_revenue}\n`;
     csv += `Card Revenue,${s.card_revenue}\n`;
     csv += `Cheque Revenue,${s.cheque_revenue || 0}\n`;
     csv += `Discounts Given,${s.discounts}\n\n`;
+
+    if (analytics.expense_categories && analytics.expense_categories.length > 0) {
+      csv += `OPERATING EXPENSES BREAKDOWN\n`;
+      csv += `Category,Amount,Entries,Share %\n`;
+      analytics.expense_categories.forEach((e: any) => {
+        csv += `"${e.category}",${e.amount},${e.count},${e.percentage}%\n`;
+      });
+      csv += `\n`;
+    }
 
     csv += `CATEGORY BREAKDOWN\n`;
     csv += `Category,Revenue,Units Sold,Profit,Share %\n`;
@@ -288,75 +301,111 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
         </div>
 
         {/* PROMINENT FINANCIAL KPI CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {/* Card 1: Gross Revenue */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-cyan-500/40 transition">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg relative overflow-hidden group hover:border-cyan-500/40 transition">
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Gross Revenue</span>
               <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shadow-inner">
                 <DollarSign className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl lg:text-3xl font-black text-white mt-2.5 font-mono tracking-tight">
+            <div className="text-2xl font-black text-white mt-2.5 font-mono tracking-tight">
               {currency}{Number(summary.gross_revenue || 0).toFixed(2)}
             </div>
             <div className="flex items-center gap-2 mt-2 text-[11px] text-slate-400">
               <span className="font-bold text-slate-300">{summary.total_orders || 0}</span>
-              <span>orders completed</span>
+              <span>orders</span>
               <span>•</span>
               <span className="font-bold text-slate-300">{summary.total_units_sold || 0}</span>
-              <span>items sold</span>
+              <span>items</span>
             </div>
           </div>
 
-          {/* Card 2: Net Profit (Prominently Highlighted) */}
-          <div className="bg-gradient-to-br from-emerald-950/50 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-emerald-400 transition">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-emerald-300 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
-                <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Gross Profit</span>
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black font-mono">
-                {summary.profit_margin || 0}% MARGIN
-              </span>
-            </div>
-            <div className="text-2xl lg:text-3xl font-black text-emerald-400 mt-2.5 font-mono tracking-tight">
-              {currency}{Number(summary.gross_profit || 0).toFixed(2)}
-            </div>
-            <span className="text-[11px] text-slate-400 mt-2 block">
-              Net profit after deducting wholesale product cost
-            </span>
-          </div>
-
-          {/* Card 3: Cost of Goods Sold (COGS) */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition">
+          {/* Card 2: Cost of Goods Sold (COGS) */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition">
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Inventory Cost (COGS)</span>
               <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shadow-inner">
                 <Tag className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl lg:text-3xl font-black text-amber-300 mt-2.5 font-mono tracking-tight">
+            <div className="text-2xl font-black text-amber-300 mt-2.5 font-mono tracking-tight">
               {currency}{Number(summary.cogs || 0).toFixed(2)}
             </div>
-            <span className="text-[11px] text-slate-400 mt-2 block">
-              Wholesale replacement cost of items sold
+            <span className="text-[11px] text-slate-400 mt-2 block truncate">
+              Wholesale replacement cost
             </span>
           </div>
 
-          {/* Card 4: Average Basket Size (AOV) */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-purple-500/40 transition">
+          {/* Card 3: Gross Profit */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg relative overflow-hidden group hover:border-blue-500/40 transition">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Average Basket (AOV)</span>
-              <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center shadow-inner">
-                <ShoppingBag className="w-4 h-4" />
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Gross Profit</span>
+              <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-black font-mono">
+                {summary.profit_margin || 0}% MARGIN
+              </span>
+            </div>
+            <div className="text-2xl font-black text-blue-400 mt-2.5 font-mono tracking-tight">
+              {currency}{Number(summary.gross_profit || 0).toFixed(2)}
+            </div>
+            <span className="text-[11px] text-slate-400 mt-2 block truncate">
+              Gross Revenue minus COGS
+            </span>
+          </div>
+
+          {/* Card 4: Operating Expenses */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg relative overflow-hidden group hover:border-rose-500/40 transition">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-rose-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Receipt className="w-3.5 h-3.5 text-rose-400" />
+                <span>Operating Expenses</span>
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shadow-inner">
+                <TrendingDown className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl lg:text-3xl font-black text-purple-300 mt-2.5 font-mono tracking-tight">
-              {currency}{Number(summary.aov || 0).toFixed(2)}
+            <div className="text-2xl font-black text-rose-400 mt-2.5 font-mono tracking-tight">
+              {currency}{Number(summary.total_expenses || 0).toFixed(2)}
             </div>
-            <span className="text-[11px] text-slate-400 mt-2 block">
-              Average customer transaction spend
+            <div className="flex items-center gap-2 mt-2 text-[11px] text-slate-400">
+              <span className="font-bold text-slate-300">{summary.expense_count || 0}</span>
+              <span>recorded overhead items</span>
+            </div>
+          </div>
+
+          {/* Card 5: Net Profit (Prominently Highlighted) */}
+          <div className={`bg-gradient-to-br ${
+            Number(summary.net_profit !== undefined ? summary.net_profit : summary.gross_profit || 0) >= 0
+              ? 'from-emerald-950/60 via-slate-900 to-slate-900 border-2 border-emerald-500/60 hover:border-emerald-400'
+              : 'from-rose-950/60 via-slate-900 to-slate-900 border-2 border-rose-500/60 hover:border-rose-400'
+          } rounded-2xl p-4 shadow-xl relative overflow-hidden group transition`}>
+            <div className="flex items-center justify-between">
+              <span className={`text-xs ${
+                Number(summary.net_profit !== undefined ? summary.net_profit : summary.gross_profit || 0) >= 0
+                  ? 'text-emerald-300'
+                  : 'text-rose-300'
+              } font-extrabold uppercase tracking-wider flex items-center gap-1.5`}>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+                <span>Net Profit</span>
+              </span>
+              <span className={`px-2 py-0.5 rounded-full ${
+                Number(summary.net_profit !== undefined ? summary.net_profit : summary.gross_profit || 0) >= 0
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+              } text-[10px] font-black font-mono`}>
+                {summary.net_profit_margin !== undefined ? summary.net_profit_margin : summary.profit_margin || 0}% NET
+              </span>
+            </div>
+            <div className={`text-2xl font-black ${
+              Number(summary.net_profit !== undefined ? summary.net_profit : summary.gross_profit || 0) >= 0
+                ? 'text-emerald-400'
+                : 'text-rose-400'
+            } mt-2.5 font-mono tracking-tight`}>
+              {currency}{Number(summary.net_profit !== undefined ? summary.net_profit : summary.gross_profit || 0).toFixed(2)}
+            </div>
+            <span className="text-[11px] text-slate-400 mt-2 block truncate">
+              Gross Profit minus Expenses
             </span>
           </div>
         </div>
@@ -519,6 +568,51 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ settings, currentUser 
             </div>
           </div>
         </div>
+
+        {/* OPERATING EXPENSES BREAKDOWN */}
+        {analytics?.expense_categories && analytics.expense_categories.length > 0 && (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                  <Receipt className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white tracking-tight">Operating Expenses by Category</h3>
+                  <span className="text-[11px] text-slate-400">
+                    Overheads deducted from Gross Profit to determine Net Store Profit ({period.toUpperCase()})
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs font-mono font-bold text-rose-400 bg-rose-500/10 border border-rose-500/30 px-2.5 py-1 rounded-lg">
+                Total Overheads: {currency}{Number(summary.total_expenses || 0).toFixed(2)}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pt-4">
+              {analytics.expense_categories.map((cat: any) => (
+                <div key={cat.category} className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="font-semibold text-slate-200 truncate">{cat.category}</span>
+                    <span className="font-bold text-rose-400 font-mono">
+                      {currency}{Number(cat.amount || 0).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-rose-500 h-full rounded-full"
+                      style={{ width: `${Math.min(100, Math.max(3, cat.percentage))}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1.5">
+                    <span>{cat.count} {cat.count === 1 ? 'entry' : 'entries'}</span>
+                    <span className="font-semibold text-slate-300">{cat.percentage}% of overheads</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* PEAK SHOPPING HOURS HEATMAP / HOURLY TRAFFIC */}
         {hourlyTraffic.length > 0 && (

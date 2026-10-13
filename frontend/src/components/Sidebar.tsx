@@ -19,6 +19,7 @@ import {
   BookOpen,
   ClipboardCheck,
   Building2,
+  Receipt,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -142,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // Fallbacks if permissions array is not set or empty
     if (currentUser.role === 'admin') return true;
     if (currentUser.role === 'supervisor') {
-      return ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'].includes(mod);
+      return ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'reports'].includes(mod);
     }
     return mod === 'pos' || mod === 'wholesale';
   };
@@ -211,6 +212,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: <Truck className="w-4 h-4 shrink-0" />,
       activeColor: 'bg-amber-600 text-white shadow-sm',
       visible: isProcurementEnabled && hasModuleAccess('procurement'),
+    },
+    {
+      id: 'expenses',
+      label: 'Expenses',
+      icon: <Receipt className="w-4 h-4 shrink-0" />,
+      activeColor: 'bg-rose-600 text-white shadow-sm',
+      visible: hasModuleAccess('expenses'),
     },
     {
       id: 'reports',

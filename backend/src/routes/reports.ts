@@ -30,12 +30,22 @@ reportsRouter.get('/summary', async (_req: Request, res: Response): Promise<void
       SELECT COUNT(*) as count FROM products
     `);
 
+    const todayExpenses = await dbGet<{ total: number; count: number }>(`
+      SELECT 
+        COALESCE(SUM(amount), 0) as total,
+        COUNT(*) as count
+      FROM expenses
+      WHERE date(expense_date) = date('now', 'localtime')
+    `);
+
     res.json({
       today_sales: todaySales?.total || 0,
       today_cash_sales: todaySales?.cash || 0,
       today_card_sales: todaySales?.card || 0,
       today_cheque_sales: todaySales?.cheque || 0,
       today_transactions: todaySales?.count || 0,
+      today_expenses: todayExpenses?.total || 0,
+      today_expenses_count: todayExpenses?.count || 0,
       low_stock_count: lowStockCount?.count || 0,
       expiring_count: expiringCount?.count || 0,
       total_products: totalProducts?.count || 0,
@@ -169,6 +179,26 @@ reportsRouter.get('/analytics', async (req: Request, res: Response): Promise<voi
       ordersWhere += ` AND date(o.created_at) >= date('now', 'localtime', '-29 days')`;
     }
 
+    // Expense filters matching the exact selected reporting period
+    let expensesWhere = `WHERE 1=1`;
+    const expenseParams: any[] = [];
+
+    if (from_date && to_date) {
+      expensesWhere += ` AND date(expense_date) >= date(?) AND date(expense_date) <= date(?)`;
+      expenseParams.push(from_date, to_date);
+    } else if (period === 'daily') {
+      if (specificDate) {
+        expensesWhere += ` AND date(expense_date) = date(?)`;
+        expenseParams.push(specificDate);
+      } else {
+        expensesWhere += ` AND date(expense_date) = date('now', 'localtime')`;
+      }
+    } else if (period === 'weekly') {
+      expensesWhere += ` AND date(expense_date) >= date('now', 'localtime', '-6 days')`;
+    } else if (period === 'monthly') {
+      expensesWhere += ` AND date(expense_date) >= date('now', 'localtime', '-29 days')`;
+    }
+
     // 1. Overall Financial Summary
     const summaryOrders = await dbGet<any>(`
       SELECT 
@@ -195,12 +225,41 @@ reportsRouter.get('/analytics', async (req: Request, res: Response): Promise<voi
       ${ordersWhere}
     `, params);
 
+    // Operating expenses for period
+    const expensesSummary = await dbGet<{ total: number; count: number }>(`
+      SELECT 
+        COALESCE(SUM(amount), 0) as total,
+        COUNT(*) as count
+      FROM expenses
+      ${expensesWhere}
+    `, expenseParams);
+
+    const expenseCategoryRows = await dbAll<any>(`
+      SELECT 
+        category,
+        ROUND(COALESCE(SUM(amount), 0), 2) as amount,
+        COUNT(*) as count
+      FROM expenses
+      ${expensesWhere}
+      GROUP BY category
+      ORDER BY amount DESC
+    `, expenseParams);
+
     const grossRevenue = Number(summaryOrders?.gross_revenue || 0);
     const totalCogs = Number(cogsQuery?.total_cogs || 0);
     const grossProfit = Math.round((grossRevenue - totalCogs) * 100) / 100;
     const profitMargin = grossRevenue > 0 ? Math.round((grossProfit / grossRevenue) * 1000) / 10 : 0;
     const totalOrders = Number(summaryOrders?.total_orders || 0);
     const aov = totalOrders > 0 ? Math.round((grossRevenue / totalOrders) * 100) / 100 : 0;
+
+    const totalExpenses = Math.round(Number(expensesSummary?.total || 0) * 100) / 100;
+    const netProfit = Math.round((grossProfit - totalExpenses) * 100) / 100;
+    const netProfitMargin = grossRevenue > 0 ? Math.round((netProfit / grossRevenue) * 1000) / 10 : 0;
+
+    const expenseCategories = expenseCategoryRows.map(c => ({
+      ...c,
+      percentage: totalExpenses > 0 ? Math.round((Number(c.amount) / totalExpenses) * 1000) / 10 : 0
+    }));
 
     // 2. Category Distribution (for Pie/Donut Chart)
     const categoryRows = await dbAll<any>(`
@@ -322,6 +381,10 @@ reportsRouter.get('/analytics', async (req: Request, res: Response): Promise<voi
         cogs: totalCogs,
         gross_profit: grossProfit,
         profit_margin: profitMargin,
+        total_expenses: totalExpenses,
+        net_profit: netProfit,
+        net_profit_margin: netProfitMargin,
+        expense_count: Number(expensesSummary?.count || 0),
         aov,
         total_units_sold: Number(cogsQuery?.total_units_sold || 0),
         cash_revenue: Number(summaryOrders?.cash_revenue || 0),
@@ -331,6 +394,7 @@ reportsRouter.get('/analytics', async (req: Request, res: Response): Promise<voi
         tax: Number(summaryOrders?.total_tax || 0),
       },
       categories,
+      expense_categories: expenseCategories,
       most_profitable: profitableWithMargin,
       fast_moving: fastMoving,
       timeline_trend: timelineTrend,

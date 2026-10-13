@@ -6,6 +6,7 @@ import { InventoryManagement } from './pages/InventoryManagement';
 import { ShiftsPage } from './pages/ShiftsPage';
 import { ProcurementPage } from './pages/ProcurementPage';
 import { GrnManagement } from './pages/GrnManagement';
+import { ExpensesPage } from './pages/ExpensesPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { ModularSettings } from './pages/ModularSettings';
 import { StaffManagement } from './pages/StaffManagement';
@@ -159,7 +160,7 @@ export function App() {
     // Fallbacks if permissions array is not set or empty
     if (currentUser.role === 'admin') return true;
     if (currentUser.role === 'supervisor') {
-      return ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'].includes(mod);
+      return ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'reports'].includes(mod);
     }
     return mod === 'pos' || mod === 'wholesale';
   };
@@ -168,7 +169,7 @@ export function App() {
   useEffect(() => {
     if (!hasModuleAccess(activeTab)) {
       const allTabs: AppModule[] = [
-        'pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'
+        'pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'expenses', 'reports', 'staff', 'settings'
       ];
       const fallbackTab = allTabs.find((t) => hasModuleAccess(t)) || 'pos';
       setActiveTab(fallbackTab);
@@ -304,6 +305,13 @@ export function App() {
 
         {activeTab === 'procurement' && settings?.feature_procurement === 'true' && hasModuleAccess('procurement') && (
           <ProcurementPage settings={settings} />
+        )}
+
+        {activeTab === 'expenses' && hasModuleAccess('expenses') && (
+          <ExpensesPage
+            settings={settings}
+            currentUser={currentUser}
+          />
         )}
 
         {activeTab === 'reports' && hasModuleAccess('reports') && (

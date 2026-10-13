@@ -1,5 +1,5 @@
 import { localDb } from './offlineDb';
-import type { Product, AppSettings, Shift, OrderReceipt, Customer, GoodsReceivedNote, CreateGrnPayload } from '../types';
+import type { Product, AppSettings, Shift, OrderReceipt, Customer, GoodsReceivedNote, CreateGrnPayload, Expense, ExpenseSummary } from '../types';
 
 const API_BASE = '/api';
 
@@ -665,6 +665,66 @@ export const api = {
   async getExpiryAlerts(): Promise<any[]> {
     const res = await fetch(`${API_BASE}/reports/expiry-alerts`);
     return res.json();
+  },
+
+  // Operating Expenses
+  async getExpenses(params: Record<string, any> = {}): Promise<{
+    expenses: Expense[];
+    total: number;
+    total_amount: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const qs = new URLSearchParams(params).toString();
+    const res = await fetch(`${API_BASE}/expenses?${qs}`, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch expenses');
+    return res.json();
+  },
+
+  async getExpensesSummary(params: Record<string, any> = {}): Promise<ExpenseSummary> {
+    const qs = new URLSearchParams(params).toString();
+    const res = await fetch(`${API_BASE}/expenses/summary?${qs}`, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch expenses summary');
+    return res.json();
+  },
+
+  async getExpenseCategories(): Promise<string[]> {
+    const res = await fetch(`${API_BASE}/expenses/categories`, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch expense categories');
+    return res.json();
+  },
+
+  async createExpense(data: Partial<Expense>): Promise<Expense> {
+    const res = await fetch(`${API_BASE}/expenses`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to create expense');
+    return result;
+  },
+
+  async updateExpense(id: string, data: Partial<Expense>): Promise<Expense> {
+    const res = await fetch(`${API_BASE}/expenses/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to update expense');
+    return result;
+  },
+
+  async deleteExpense(id: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/expenses/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to delete expense');
+    return result;
   },
 
   // Suppliers (Procurement & GRN Inward)

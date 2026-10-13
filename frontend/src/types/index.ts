@@ -243,7 +243,39 @@ export interface CreateGrnPayload {
   }>;
 }
 
-export type AppModule = 'pos' | 'wholesale' | 'catalog' | 'inventory' | 'grn' | 'customers' | 'shifts' | 'procurement' | 'reports' | 'staff' | 'settings';
+export type AppModule = 'pos' | 'wholesale' | 'catalog' | 'inventory' | 'grn' | 'customers' | 'shifts' | 'expenses' | 'procurement' | 'reports' | 'staff' | 'settings';
+
+export interface Expense {
+  id: string;
+  expense_date: string;
+  category: string;
+  amount: number;
+  payment_method: string;
+  reference_no?: string;
+  description?: string;
+  created_by_id?: string;
+  created_by_name?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ExpenseSummary {
+  total_expenses: number;
+  expense_count: number;
+  today_expenses: number;
+  this_month_expenses: number;
+  by_category: Array<{
+    category: string;
+    amount: number;
+    count: number;
+    percentage: number;
+  }>;
+  by_payment_method: Array<{
+    payment_method: string;
+    amount: number;
+    count: number;
+  }>;
+}
 
 export interface User {
   id: string;
@@ -317,6 +349,13 @@ export const AVAILABLE_MODULES: ModuleDefinition[] = [
     description: 'Supplier orders, pending purchase orders, and goods receiving with stock injection.',
     iconName: 'Truck',
     badgeColor: 'amber',
+  },
+  {
+    id: 'expenses',
+    name: 'Operating Expenses',
+    description: 'Track shop operating expenses (rent, utilities, salaries, maintenance) and deduct from profits.',
+    iconName: 'Receipt',
+    badgeColor: 'rose',
   },
   {
     id: 'reports',

@@ -12,6 +12,7 @@ import { reportsRouter } from './routes/reports';
 import { customersRouter } from './routes/customers';
 import { grnRouter } from './routes/grn';
 import { printerRouter } from './routes/printer';
+import { expensesRouter } from './routes/expenses';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use('/api/purchases', purchasesRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/grn', grnRouter);
+app.use('/api/expenses', expensesRouter);
 app.use('/api/print', printerRouter);
 
 // Global Error Handler

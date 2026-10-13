@@ -454,6 +454,25 @@ export async function initDatabase(): Promise<void> {
   await dbRun('CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone)');
   await dbRun('CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name)');
 
+  await dbRun(`
+    CREATE TABLE IF NOT EXISTS expenses (
+      id TEXT PRIMARY KEY,
+      expense_date TEXT NOT NULL,
+      category TEXT NOT NULL,
+      amount REAL NOT NULL,
+      payment_method TEXT NOT NULL DEFAULT 'CASH',
+      reference_no TEXT,
+      description TEXT,
+      created_by_id TEXT,
+      created_by_name TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date)');
+  await dbRun('CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category)');
+
   try {
     await dbRun('ALTER TABLE orders ADD COLUMN customer_id TEXT');
   } catch {}
@@ -522,7 +541,7 @@ export async function initDatabase(): Promise<void> {
   setJwtSecret(activeSecret);
 
   // Seed default users if empty
-  const defaultAdminModules = JSON.stringify(['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings']);
+  const defaultAdminModules = JSON.stringify(['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'procurement', 'reports', 'staff', 'settings']);
   const defaultCashierModules = JSON.stringify(['pos', 'wholesale']);
 
   const adminUser = await dbGet('SELECT id FROM users WHERE username = ?', ['admin']);
@@ -562,11 +581,11 @@ export async function initDatabase(): Promise<void> {
   await dbRun(`
     UPDATE users 
     SET permissions = CASE 
-      WHEN role = 'admin' THEN '["pos","wholesale","catalog","inventory","grn","customers","shifts","procurement","reports","staff","settings"]'
-      WHEN role = 'supervisor' THEN '["pos","wholesale","catalog","inventory","grn","customers","shifts","reports"]'
+      WHEN role = 'admin' THEN '["pos","wholesale","catalog","inventory","grn","customers","shifts","expenses","procurement","reports","staff","settings"]'
+      WHEN role = 'supervisor' THEN '["pos","wholesale","catalog","inventory","grn","customers","shifts","expenses","reports"]'
       ELSE '["pos","wholesale"]'
     END
-    WHERE permissions IS NULL OR permissions = '' OR permissions = '[]' OR permissions NOT LIKE '%wholesale%'
+    WHERE permissions IS NULL OR permissions = '' OR permissions = '[]' OR permissions NOT LIKE '%expenses%'
   `);
 
   // Seed default categories for Motor Vehicle Modification Shop

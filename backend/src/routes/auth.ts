@@ -55,8 +55,8 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
     } catch {}
 
     if (!parsedPermissions.length) {
-      if (user.role === 'admin') parsedPermissions = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'];
-      else if (user.role === 'supervisor') parsedPermissions = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'];
+      if (user.role === 'admin') parsedPermissions = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'procurement', 'reports', 'staff', 'settings'];
+      else if (user.role === 'supervisor') parsedPermissions = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'reports'];
       else parsedPermissions = ['pos', 'wholesale'];
     }
 
