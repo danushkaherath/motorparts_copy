@@ -52,7 +52,7 @@ const BarcodeSvg: React.FC<BarcodeSvgProps> = ({
         width,
         height,
         displayValue: false,
-        margin: 4,
+        margin: 2,
         background: '#ffffff',
         lineColor: '#000000',
         flat: true,
@@ -64,7 +64,7 @@ const BarcodeSvg: React.FC<BarcodeSvgProps> = ({
           width,
           height,
           displayValue: false,
-          margin: 4,
+          margin: 2,
           background: '#ffffff',
           lineColor: '#000000',
           flat: true,
@@ -75,7 +75,7 @@ const BarcodeSvg: React.FC<BarcodeSvgProps> = ({
     }
   }, [value, width, height]);
 
-  return <svg ref={svgRef} className={`shape-crispEdges block max-w-full ${className}`} />;
+  return <svg ref={svgRef} className={`shape-crispEdges block max-w-full h-auto ${className}`} />;
 };
 
 export interface BarcodeLabelModalProps {
@@ -158,13 +158,16 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
   const storeName = settings?.store_name || 'MOTOR PARTS';
   const currentProduct = products[activeProductIndex] || products[0];
 
-  const activeDim = sizeMap[config.size] || sizeMap['50x25'];
-  const isVeryCompact = activeDim.heightMm <= 22;
-  const isCompact = activeDim.heightMm <= 27;
+  const activeDim = sizeMap[config.size] || sizeMap['50x30'];
+  const isTier20 = activeDim.heightMm <= 22;                           // 20mm (50x20, 40x20)
+  const isTier25 = activeDim.heightMm > 22 && activeDim.heightMm <= 27; // 25mm (50x25, 38x25)
+  const isTier30 = activeDim.heightMm > 27 && activeDim.heightMm <= 34; // 30mm (50x30, 40x30)
+  const isTier40 = activeDim.heightMm > 34;                             // 40mm+ (60x40, 80x40)
 
   // Module width (exact pixels per narrowest bar) and bar height for JsBarcode
-  const barcodeBarWidth = isVeryCompact ? 1.4 : isCompact ? 1.6 : 1.8;
-  const barcodeHeight = isVeryCompact ? 20 : isCompact ? 30 : 42;
+  const barcodeBarWidth = isTier20 ? 1.2 : isTier25 ? 1.3 : isTier30 ? 1.4 : 1.7;
+  const barcodeHeight = isTier20 ? 16 : isTier25 ? 20 : isTier30 ? 25 : 36;
+  const paddingCss = isTier20 ? '1mm 1.5mm' : isTier25 ? '1.5mm 1.5mm' : isTier30 ? '2mm 2mm' : '3mm 2.5mm';
 
   // Barcode data value
   const barcodeValue = String(currentProduct.barcode || currentProduct.sku || '00000000').trim();
@@ -247,7 +250,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
         @media print {
           @page {
             size: ${activeDim.widthMm}mm ${activeDim.heightMm}mm;
-            margin: 0mm !important;
+            margin: 0;
           }
           html, body {
             margin: 0 !important;
@@ -255,7 +258,8 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
             background: #ffffff !important;
             overflow: visible !important;
             text-align: left !important;
-            width: 100% !important;
+            width: ${activeDim.widthMm}mm !important;
+            height: ${activeDim.heightMm}mm !important;
           }
           body * {
             visibility: hidden !important;
@@ -268,7 +272,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
-            width: 100% !important;
+            width: ${activeDim.widthMm}mm !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
@@ -287,9 +291,10 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
             align-items: center !important;
             justify-content: space-between !important;
             box-sizing: border-box !important;
-            padding: ${isVeryCompact ? '2.5mm 1.5mm' : '3mm 2mm'} !important;
+            padding: ${paddingCss} !important;
             overflow: hidden !important;
-            margin: 0 auto !important;
+            margin: 0 !important;
+            background: #ffffff !important;
             ${config.horizontalOffset ? `transform: translateX(${config.horizontalOffset}mm) ${config.rotation ? `rotate(${config.rotation}deg)` : ''} !important;` : config.rotation ? `transform: rotate(${config.rotation}deg) !important;` : ''}
             ${config.rotation ? 'transform-origin: center center !important;' : ''}
           }
@@ -313,7 +318,7 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                 height: `${activeDim.heightMm}mm`,
                 maxHeight: `${activeDim.heightMm}mm`,
                 boxSizing: 'border-box',
-                padding: isVeryCompact ? '2.5mm 1.5mm' : '3mm 2mm',
+                padding: paddingCss,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -323,8 +328,8 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
             >
               {/* Header Store Name (No horizontal line) */}
               {config.showStoreName && (
-                <div className={`font-black uppercase tracking-wider w-full text-center overflow-hidden text-ellipsis whitespace-nowrap shrink-0 ${
-                  isVeryCompact ? 'text-[7px] leading-tight' : isCompact ? 'text-[8px] leading-tight' : 'text-[9.5px] leading-normal'
+                <div className={`font-black uppercase tracking-tight w-full text-center overflow-hidden text-ellipsis whitespace-nowrap shrink-0 ${
+                  isTier20 ? 'text-[6.5px] leading-tight' : isTier25 ? 'text-[7.5px] leading-tight' : isTier30 ? 'text-[8px] leading-tight' : 'text-[9.5px] leading-normal'
                 }`}>
                   <span className="block truncate">{storeName}</span>
                 </div>
@@ -333,9 +338,11 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               {/* Product Name */}
               {config.showProductName && (
                 <div className={`font-bold w-full text-center px-0.5 shrink-0 ${
-                  isVeryCompact
+                  isTier20
+                    ? 'text-[7px] leading-tight overflow-hidden text-ellipsis whitespace-nowrap'
+                    : isTier25
                     ? 'text-[7.5px] leading-tight overflow-hidden text-ellipsis whitespace-nowrap'
-                    : isCompact
+                    : isTier30
                     ? 'text-[8.5px] leading-tight overflow-hidden text-ellipsis whitespace-nowrap'
                     : 'text-[10px] leading-normal line-clamp-2'
                 }`}>
@@ -352,19 +359,19 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                 />
                 {config.showBarcodeNumber && (
                   <span className={`font-mono tracking-widest text-black font-bold shrink-0 ${
-                    isVeryCompact ? 'text-[6.5px] leading-none mt-0.5' : isCompact ? 'text-[7.5px] leading-none mt-0.5' : 'text-[9px] leading-tight mt-1'
+                    isTier20 ? 'text-[6px] leading-none mt-0.5' : isTier25 ? 'text-[7px] leading-none mt-0.5' : isTier30 ? 'text-[7.5px] leading-none mt-0.5' : 'text-[9px] leading-tight mt-1'
                   }`}>
                     {pBarcode}
                   </span>
                 )}
               </div>
 
-              {/* Price & Meta Footer (No horizontal line) */}
+              {/* Price & Meta Footer (Guaranteed inside label height) */}
               {(config.showMrp || config.showPrice || config.showBatch || config.showExpiry) && (
                 <div className="w-full flex items-center justify-center shrink-0 px-0.5">
                   {/* Left: Batch or Expiry only if enabled */}
                   {(config.showBatch || config.showExpiry) && (
-                    <div className={`font-mono text-left leading-tight mr-auto ${isVeryCompact ? 'text-[6.5px]' : 'text-[7.5px]'}`}>
+                    <div className={`font-mono text-left leading-tight mr-auto ${isTier20 ? 'text-[6px]' : isTier25 ? 'text-[7px]' : 'text-[7.5px]'}`}>
                       {config.showBatch && prod.batch_number && (
                         <div>B:{prod.batch_number}</div>
                       )}
@@ -377,22 +384,31 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                   {/* MRP (Prominent and standalone when showPrice is off) */}
                   {config.showMrp && !config.showPrice ? (
                     <div className="text-center font-mono font-black text-black leading-none">
-                      <span className={isVeryCompact ? 'text-[7.5px] font-bold' : isCompact ? 'text-[8.5px] font-bold' : 'text-[10px] font-bold'}>
+                      <span className={isTier20 ? 'text-[7px] font-bold' : isTier25 ? 'text-[8px] font-bold' : isTier30 ? 'text-[9px] font-bold' : 'text-[10px] font-bold'}>
                         MRP:{' '}
                       </span>
-                      <span className={isVeryCompact ? 'text-[9px] font-black' : isCompact ? 'text-[10.5px] font-black' : 'text-[12px] font-black'}>
+                      <span className={isTier20 ? 'text-[8.5px] font-black' : isTier25 ? 'text-[9.5px] font-black' : isTier30 ? 'text-[11px] font-black' : 'text-[12.5px] font-black'}>
                         {currency} {Number(prod.mrp || prod.selling_price || 0).toFixed(2)}
                       </span>
                     </div>
+                  ) : config.showPrice && !config.showMrp ? (
+                    <div className="text-center font-mono font-black text-black leading-none">
+                      <span className={isTier20 ? 'text-[7px] font-bold' : isTier25 ? 'text-[8px] font-bold' : isTier30 ? 'text-[9px] font-bold' : 'text-[10px] font-bold'}>
+                        PRICE:{' '}
+                      </span>
+                      <span className={isTier20 ? 'text-[8.5px] font-black' : isTier25 ? 'text-[9.5px] font-black' : isTier30 ? 'text-[11px] font-black' : 'text-[12.5px] font-black'}>
+                        {currency} {Number(prod.selling_price || 0).toFixed(2)}
+                      </span>
+                    </div>
                   ) : (
-                    <div className="text-right ml-auto leading-none">
-                      {config.showMrp && Number(prod.mrp) > Number(prod.selling_price) && (
-                        <span className={`line-through text-black/70 mr-1 font-mono ${isVeryCompact ? 'text-[7.5px]' : 'text-[8.5px]'}`}>
-                          {currency}{Number(prod.mrp).toFixed(2)}
+                    <div className="flex items-center justify-between w-full px-1 font-mono leading-none">
+                      {config.showMrp && (
+                        <span className={`text-black/70 font-bold ${isTier20 ? 'text-[6.5px]' : isTier25 ? 'text-[7.5px]' : isTier30 ? 'text-[8px]' : 'text-[9px]'}`}>
+                          MRP: <span className="line-through">{currency}{Number(prod.mrp || prod.selling_price || 0).toFixed(2)}</span>
                         </span>
                       )}
                       {config.showPrice && (
-                        <span className={`font-black font-mono ${isVeryCompact ? 'text-[9px]' : isCompact ? 'text-[10.5px]' : 'text-[12px]'}`}>
+                        <span className={`font-black text-black ml-auto ${isTier20 ? 'text-[8px]' : isTier25 ? 'text-[9.5px]' : isTier30 ? 'text-[10.5px]' : 'text-[12px]'}`}>
                           {currency}{Number(prod.selling_price || 0).toFixed(2)}
                         </span>
                       )}
@@ -537,11 +553,16 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
               </div>
 
               {/* Chrome Margins Notification / Fix Callout */}
-              <div className="bg-amber-950/30 border border-amber-500/40 rounded-2xl p-3 flex items-start gap-2.5 text-xs text-amber-200">
-                <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <div className="leading-snug">
-                  <span className="font-bold text-white block">Important Chrome Print Setting for Xprinter:</span>
-                  In the Chrome Print dialog, expand <strong className="text-white">More settings</strong> &rarr; set <strong className="text-amber-300">Margins: None</strong> and select <strong className="text-amber-300">Paper size: {activeDim.widthMm}mm × {activeDim.heightMm}mm</strong>. This prevents Chrome from trimming the bottom of your label!
+              <div className="bg-amber-950/40 border border-amber-500/50 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-amber-200">
+                <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div className="leading-snug space-y-1">
+                  <span className="font-bold text-white text-sm block">How to print {activeDim.widthMm}mm × {activeDim.heightMm}mm correctly in Chrome:</span>
+                  <div className="text-[11.5px] text-amber-200/90 space-y-1">
+                    <div>1. In Chrome Print Preview, click <strong className="text-white">"More settings"</strong> on the right.</div>
+                    <div>2. Under <strong className="text-white">Paper size</strong>, select <strong className="text-amber-300 font-bold">{activeDim.widthMm}mm × {activeDim.heightMm}mm</strong> (or 2"×1.2" / User Defined).</div>
+                    <div>3. Under <strong className="text-white">Margins</strong>, select <strong className="text-amber-300 font-bold">None</strong>.</div>
+                    <div>4. Under <strong className="text-white">Scale</strong>, select <strong className="text-white font-bold">100%</strong> (or Default).</div>
+                  </div>
                 </div>
               </div>
 
@@ -797,15 +818,15 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                         width: `${activeDim.widthPx}px`,
                         height: `${activeDim.heightPx}px`,
                         maxHeight: `${activeDim.heightPx}px`,
-                        padding: isVeryCompact ? '9px 6px' : '11px 8px',
+                        padding: isTier20 ? '4px 6px' : isTier25 ? '6px 6px' : isTier30 ? '8px 8px' : '11px 9px',
                         transform: config.rotation ? `rotate(${config.rotation}deg)` : 'none',
                         transition: 'transform 0.2s ease',
                       }}
                     >
                       {/* Top Store Header (No horizontal line) */}
                       {config.showStoreName && (
-                        <div className={`w-full text-center font-black uppercase tracking-wider text-black overflow-hidden text-ellipsis whitespace-nowrap shrink-0 ${
-                          isVeryCompact ? 'text-[7px] leading-tight' : isCompact ? 'text-[8px] leading-tight' : 'text-[10px]'
+                        <div className={`w-full text-center font-black uppercase tracking-tight text-black overflow-hidden text-ellipsis whitespace-nowrap shrink-0 ${
+                          isTier20 ? 'text-[6.5px] leading-tight' : isTier25 ? 'text-[7.5px] leading-tight' : isTier30 ? 'text-[8px] leading-tight' : 'text-[9.5px]'
                         }`}>
                           <span className="block truncate">{storeName}</span>
                         </div>
@@ -814,11 +835,13 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                       {/* Product Title */}
                       {config.showProductName && (
                         <div className={`w-full text-center font-bold text-black px-0.5 shrink-0 ${
-                          isVeryCompact
+                          isTier20
+                            ? 'text-[7px] leading-tight overflow-hidden text-ellipsis whitespace-nowrap'
+                            : isTier25
                             ? 'text-[7.5px] leading-tight overflow-hidden text-ellipsis whitespace-nowrap'
-                            : isCompact
+                            : isTier30
                             ? 'text-[8.5px] leading-tight overflow-hidden text-ellipsis whitespace-nowrap'
-                            : 'text-[11px] line-clamp-2'
+                            : 'text-[10px] line-clamp-2'
                         }`}>
                           <span className="block truncate">{currentProduct.name}</span>
                         </div>
@@ -833,19 +856,19 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
                         />
                         {config.showBarcodeNumber && (
                           <span className={`font-mono tracking-widest text-black font-bold shrink-0 ${
-                            isVeryCompact ? 'text-[6.5px] leading-none mt-0.5' : isCompact ? 'text-[7.5px] leading-tight mt-0.5' : 'text-[9px] mt-0.5'
+                            isTier20 ? 'text-[6px] leading-none mt-0.5' : isTier25 ? 'text-[7px] leading-none mt-0.5' : isTier30 ? 'text-[7.5px] leading-none mt-0.5' : 'text-[9px] mt-0.5'
                           }`}>
                             {barcodeValue}
                           </span>
                         )}
                       </div>
 
-                      {/* Bottom Strip: Price & Expiry (No horizontal line) */}
+                      {/* Bottom Strip: Price & Expiry (Guaranteed inside label height) */}
                       {(config.showMrp || config.showPrice || config.showBatch || config.showExpiry) && (
                         <div className="w-full flex items-center justify-center shrink-0 px-0.5">
                           {(config.showBatch || config.showExpiry) && (
                             <div className={`font-mono text-left leading-tight text-black mr-auto ${
-                              isVeryCompact ? 'text-[6.5px]' : 'text-[7.5px]'
+                              isTier20 ? 'text-[6px]' : isTier25 ? 'text-[7px]' : 'text-[7.5px]'
                             }`}>
                               {config.showBatch && currentProduct.batch_number && (
                                 <div>B:{currentProduct.batch_number}</div>
@@ -858,22 +881,31 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
 
                           {config.showMrp && !config.showPrice ? (
                             <div className="text-center font-mono font-black text-black leading-none">
-                              <span className={isVeryCompact ? 'text-[7.5px] font-bold' : isCompact ? 'text-[8.5px] font-bold' : 'text-[10px] font-bold'}>
+                              <span className={isTier20 ? 'text-[7px] font-bold' : isTier25 ? 'text-[8px] font-bold' : isTier30 ? 'text-[9px] font-bold' : 'text-[10px] font-bold'}>
                                 MRP:{' '}
                               </span>
-                              <span className={isVeryCompact ? 'text-[9px] font-black' : isCompact ? 'text-[10.5px] font-black' : 'text-[12px] font-black'}>
+                              <span className={isTier20 ? 'text-[8.5px] font-black' : isTier25 ? 'text-[9.5px] font-black' : isTier30 ? 'text-[11px] font-black' : 'text-[12.5px] font-black'}>
                                 {currency} {Number(currentProduct.mrp || currentProduct.selling_price || 0).toFixed(2)}
                               </span>
                             </div>
+                          ) : config.showPrice && !config.showMrp ? (
+                            <div className="text-center font-mono font-black text-black leading-none">
+                              <span className={isTier20 ? 'text-[7px] font-bold' : isTier25 ? 'text-[8px] font-bold' : isTier30 ? 'text-[9px] font-bold' : 'text-[10px] font-bold'}>
+                                PRICE:{' '}
+                              </span>
+                              <span className={isTier20 ? 'text-[8.5px] font-black' : isTier25 ? 'text-[9.5px] font-black' : isTier30 ? 'text-[11px] font-black' : 'text-[12.5px] font-black'}>
+                                {currency} {Number(currentProduct.selling_price || 0).toFixed(2)}
+                              </span>
+                            </div>
                           ) : (
-                            <div className="text-right ml-auto leading-none">
-                              {config.showMrp && Number(currentProduct.mrp) > Number(currentProduct.selling_price) && (
-                                <span className={`line-through text-black/70 mr-1 font-mono ${isVeryCompact ? 'text-[7.5px]' : 'text-[8.5px]'}`}>
-                                  {currency}{Number(currentProduct.mrp).toFixed(2)}
+                            <div className="flex items-center justify-between w-full px-1 font-mono leading-none">
+                              {config.showMrp && (
+                                <span className={`text-black/70 font-bold ${isTier20 ? 'text-[6.5px]' : isTier25 ? 'text-[7.5px]' : isTier30 ? 'text-[8px]' : 'text-[9px]'}`}>
+                                  MRP: <span className="line-through">{currency}{Number(currentProduct.mrp || currentProduct.selling_price || 0).toFixed(2)}</span>
                                 </span>
                               )}
                               {config.showPrice && (
-                                <span className={`font-black font-mono text-black ${isVeryCompact ? 'text-[9px]' : isCompact ? 'text-[10.5px]' : 'text-[12px]'}`}>
+                                <span className={`font-black text-black ml-auto ${isTier20 ? 'text-[8px]' : isTier25 ? 'text-[9.5px]' : isTier30 ? 'text-[10.5px]' : 'text-[12px]'}`}>
                                   {currency}{Number(currentProduct.selling_price || 0).toFixed(2)}
                                 </span>
                               )}
