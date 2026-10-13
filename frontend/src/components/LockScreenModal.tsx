@@ -7,10 +7,8 @@ interface LockScreenModalProps {
   onUnlock: (user: any) => void;
 }
 
-export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, currentUser, onUnlock }) => {
-  const [username, setUsername] = useState<string>(
-    currentUser?.username && currentUser.username !== 'cashier1' ? currentUser.username : 'owner'
-  );
+export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, onUnlock }) => {
+  const [username, setUsername] = useState<string>('');
   const [pin, setPin] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,17 +19,14 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
 
   useEffect(() => {
     if (isLocked) {
+      setUsername('');
       setPin('');
       setError(null);
-      const targetUser = currentUser?.username && currentUser.username !== 'cashier1' 
-        ? currentUser.username 
-        : 'owner';
-      setUsername(targetUser);
       setTimeout(() => {
-        pinInputRef.current?.focus();
+        usernameInputRef.current?.focus();
       }, 50);
     }
-  }, [isLocked, currentUser]);
+  }, [isLocked]);
 
   if (!isLocked) return null;
 
