@@ -17,6 +17,7 @@ export const WipeCatalogModal: React.FC<WipeCatalogModalProps> = ({
 }) => {
   const [adminPin, setAdminPin] = useState<string>('');
   const [confirmText, setConfirmText] = useState<string>('');
+  const [cascadeHistory, setCascadeHistory] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
@@ -25,6 +26,7 @@ export const WipeCatalogModal: React.FC<WipeCatalogModalProps> = ({
     if (isOpen) {
       setAdminPin('');
       setConfirmText('');
+      setCascadeHistory(false);
       setError(null);
       setTimeout(() => pinInputRef.current?.focus(), 80);
     }
@@ -42,7 +44,7 @@ export const WipeCatalogModal: React.FC<WipeCatalogModalProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const res = await api.wipeProductCatalog(adminPin.trim());
+      const res = await api.wipeProductCatalog(adminPin.trim(), cascadeHistory);
       onSuccess(res.deleted_count ?? productCount);
       onClose();
     } catch (err: any) {
@@ -132,6 +134,21 @@ export const WipeCatalogModal: React.FC<WipeCatalogModalProps> = ({
               required
               className="w-full bg-slate-950 border border-slate-700 focus:border-rose-500 rounded-xl px-3.5 py-2 text-center text-xs font-bold text-white uppercase outline-hidden transition"
             />
+          </div>
+
+          {/* Cascade History Option */}
+          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-2.5">
+            <input
+              id="wipe-cascade-history"
+              type="checkbox"
+              checked={cascadeHistory}
+              onChange={(e) => setCascadeHistory(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded text-rose-500 focus:ring-rose-500 border-slate-700 bg-slate-900 cursor-pointer"
+            />
+            <label htmlFor="wipe-cascade-history" className="text-xs text-slate-300 cursor-pointer select-none">
+              <strong className="text-white block font-medium">Force wipe linked transactions</strong>
+              <span>Also delete test sales and inward records to allow wiping if transactional history exists.</span>
+            </label>
           </div>
 
           {/* Action Buttons */}

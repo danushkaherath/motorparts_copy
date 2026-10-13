@@ -618,10 +618,59 @@ export async function initDatabase(): Promise<void> {
     console.log('Migrated legacy grocery categories to Motor Vehicle Modification Shop categories.');
   }
 
-  // Seed default vehicle modification products if empty
-  const productsCount = await dbGet<{ count: number }>('SELECT COUNT(*) as count FROM products');
-  if (productsCount && productsCount.count === 0) {
-    const sampleProducts = [
+  // One-time automatic cleanup migration: purge legacy dummy records, test transactions, and reset statistics
+  const dummyCleanupSetting = await dbGet<{ value: string }>('SELECT value FROM settings WHERE key = ?', ['dummy_cleanup_v1']);
+  if (!dummyCleanupSetting) {
+    try {
+      console.log('Running automatic dummy data & statistics cleanup migration...');
+      await runInTransaction(async () => {
+        // Clear all test orders & shifts to reset statistics
+        await dbRun('DELETE FROM order_items');
+        await dbRun('DELETE FROM orders');
+        await dbRun('DELETE FROM shifts');
+
+        // Clear dummy inward/procurement & batches
+        await dbRun('DELETE FROM grn_payments');
+        await dbRun('DELETE FROM goods_received_items');
+        await dbRun('DELETE FROM goods_received_notes');
+        await dbRun('DELETE FROM purchase_order_items');
+        await dbRun('DELETE FROM purchase_orders');
+        await dbRun('DELETE FROM product_batches');
+
+        // Delete seeded dummy products (all sample products)
+        await dbRun("DELETE FROM products WHERE id LIKE 'prod_%' OR barcode LIKE 'MOD-%' OR barcode LIKE '890%'");
+
+        // Delete dummy suppliers
+        await dbRun("DELETE FROM suppliers WHERE id IN ('sup_1', 'sup_2', 'sup_3')");
+
+        // Delete dummy customers and reset any remaining points/statistics
+        await dbRun("DELETE FROM customers WHERE id IN ('cust_1', 'cust_2')");
+        await dbRun('UPDATE customers SET points = 0, total_spent = 0, visits_count = 0');
+
+        // Update legacy store branding if still freshmart
+        await dbRun("UPDATE settings SET value = 'MotorParts & Tuning Studio (LKR)' WHERE key = 'store_name' AND (value LIKE '%FreshMart%' OR value LIKE '%Grocery%')");
+        await dbRun("UPDATE settings SET value = '420 Speed Avenue, Colombo 05, Sri Lanka' WHERE key = 'store_address' AND value LIKE '%Galle Road%'");
+        await dbRun("UPDATE settings SET value = 'Thank you for choosing MotorParts & Tuning Studio! Professional installation & track support.' WHERE key = 'store_receipt_footer' AND value LIKE '%FreshMart%'");
+
+        // Mark flags so sample data is never re-seeded
+        await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES ('sample_products_seeded', 'cleared')");
+        await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES ('suppliers_sample_seeded', 'cleared')");
+        await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES ('customers_sample_seeded', 'cleared')");
+        await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES ('dummy_cleanup_v1', 'completed')");
+      });
+      console.log('Dummy data & statistics successfully wiped and reset to 0.');
+    } catch (cleanErr: any) {
+      console.error('Notice: dummy cleanup migration encountered:', cleanErr.message);
+    }
+  }
+
+  // Seed default vehicle modification products only on brand new installation if not cleared
+  const sampleProductsSetting = await dbGet('SELECT value FROM settings WHERE key = ?', ['sample_products_seeded']);
+  if (!sampleProductsSetting) {
+    await dbRun('INSERT INTO settings (key, value) VALUES (?, ?)', ['sample_products_seeded', 'true']);
+    const productsCount = await dbGet<{ count: number }>('SELECT COUNT(*) as count FROM products');
+    if (productsCount && productsCount.count === 0) {
+      const sampleProducts = [
       {
         id: 'prod_1',
         barcode: 'MOD-EXH-001',
@@ -767,6 +816,7 @@ export async function initDatabase(): Promise<void> {
       );
     }
   }
+}
 
   // Seed sample suppliers once on initial setup
   const suppliersSeeded = await dbGet('SELECT value FROM settings WHERE key = ?', ['suppliers_sample_seeded']);
@@ -810,38 +860,42 @@ export async function initDatabase(): Promise<void> {
     }
   }
 
-  // Seed sample customers if empty
-  const customersCount = await dbGet<{ count: number }>('SELECT COUNT(*) as count FROM customers');
-  if (customersCount && customersCount.count === 0) {
-    const sampleCustomers = [
-      {
-        id: 'cust_1',
-        name: 'Kasun Perera',
-        phone: '0771234567',
-        email: 'kasun.p@gmail.com',
-        address: 'Colombo 03',
-        points: 45,
-        total_spent: 4500,
-        visits_count: 4,
-      },
-      {
-        id: 'cust_2',
-        name: 'Dilani Silva',
-        phone: '0719876543',
-        email: 'dilani.s@yahoo.com',
-        address: 'Nugegoda',
-        points: 120,
-        total_spent: 12500,
-        visits_count: 9,
-      },
-    ];
+  // Seed sample customers once on initial setup if not cleared
+  const customersSampleSeeded = await dbGet('SELECT value FROM settings WHERE key = ?', ['customers_sample_seeded']);
+  if (!customersSampleSeeded) {
+    await dbRun('INSERT INTO settings (key, value) VALUES (?, ?)', ['customers_sample_seeded', 'true']);
+    const customersCount = await dbGet<{ count: number }>('SELECT COUNT(*) as count FROM customers');
+    if (customersCount && customersCount.count === 0) {
+      const sampleCustomers = [
+        {
+          id: 'cust_1',
+          name: 'Kasun Perera',
+          phone: '0771234567',
+          email: 'kasun.p@gmail.com',
+          address: 'Colombo 03',
+          points: 45,
+          total_spent: 4500,
+          visits_count: 4,
+        },
+        {
+          id: 'cust_2',
+          name: 'Dilani Silva',
+          phone: '0719876543',
+          email: 'dilani.s@yahoo.com',
+          address: 'Nugegoda',
+          points: 120,
+          total_spent: 12500,
+          visits_count: 9,
+        },
+      ];
 
-    for (const c of sampleCustomers) {
-      await dbRun(
-        `INSERT INTO customers (id, name, phone, email, address, points, total_spent, visits_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [c.id, c.name, c.phone, c.email, c.address, c.points, c.total_spent, c.visits_count]
-      );
+      for (const c of sampleCustomers) {
+        await dbRun(
+          `INSERT INTO customers (id, name, phone, email, address, points, total_spent, visits_count)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [c.id, c.name, c.phone, c.email, c.address, c.points, c.total_spent, c.visits_count]
+        );
+      }
     }
   }
 

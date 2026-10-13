@@ -22,10 +22,12 @@ import {
   X,
   Sun,
   Moon,
+  RotateCcw,
 } from 'lucide-react';
 import type { AppSettings } from '../types';
 import { api } from '../services/api';
 import { WipeCatalogModal } from '../components/WipeCatalogModal';
+import { ResetDummyDataModal } from '../components/ResetDummyDataModal';
 import { SupervisorPinModal } from '../components/SupervisorPinModal';
 import { useTheme } from '../context/ThemeContext';
 
@@ -45,6 +47,7 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
   const { theme, setTheme, isDark } = useTheme();
   const [formData, setFormData] = useState<Partial<AppSettings>>({});
   const [isWipeModalOpen, setIsWipeModalOpen] = useState<boolean>(false);
+  const [isResetDummyModalOpen, setIsResetDummyModalOpen] = useState<boolean>(false);
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState<boolean>(false);
   const [wipeNotice, setWipeNotice] = useState<string | null>(null);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
@@ -882,6 +885,28 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
             </div>
           )}
 
+          {/* Clear Dummy Data & Reset Analytics */}
+          <div className="bg-amber-950/20 border border-amber-900/60 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
+                <RotateCcw className="w-4 h-4 text-amber-400" />
+                <span>Reset Dummy Data & Clear Sales Statistics</span>
+              </div>
+              <p className="text-xs text-slate-400 max-w-xl">
+                Permanently wipes all sample/test orders, cashier shift logs, dummy contacts, and resets all sales & revenue analytics to <strong>0</strong>. Preserves store branding, categories, and logins. Requires Administrator PIN verification.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsResetDummyModalOpen(true)}
+              className="px-4 py-2.5 bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-600/40 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 cursor-pointer shadow-md shadow-amber-950/40"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Reset Dummy Data</span>
+            </button>
+          </div>
+
           <div className="bg-rose-950/20 border border-rose-900/60 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
@@ -904,6 +929,15 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Admin Reset Dummy Data & Statistics Modal */}
+      <ResetDummyDataModal
+        isOpen={isResetDummyModalOpen}
+        onClose={() => setIsResetDummyModalOpen(false)}
+        onSuccess={(deleted) => {
+          setWipeNotice(`Dummy data wiped successfully: ${deleted.orders} orders, ${deleted.shifts} shifts, ${deleted.products} dummy products, ${deleted.suppliers} suppliers, ${deleted.customers} customers cleared. Statistics reset to 0.`);
+        }}
+      />
 
       {/* Admin Wipe Entire Catalog Modal */}
       <WipeCatalogModal

@@ -1263,7 +1263,9 @@ productsRouter.post('/wipe-catalog', async (req: Request, res: Response): Promis
     const grnTotal = grnCount?.count || 0;
     const poTotal = poCount?.count || 0;
 
-    if (salesTotal > 0 || grnTotal > 0 || poTotal > 0) {
+    const cascadeHistory = req.body.cascade_history === true;
+
+    if (!cascadeHistory && (salesTotal > 0 || grnTotal > 0 || poTotal > 0)) {
       res.status(400).json({
         error: `Cannot wipe product catalog: Active transaction history exists (${salesTotal} sales line(s), ${grnTotal} GRN inward item(s), ${poTotal} PO item(s)). Wiping products would corrupt historical records and audit trails.`,
         has_history: true,
@@ -1273,9 +1275,21 @@ productsRouter.post('/wipe-catalog', async (req: Request, res: Response): Promis
     }
 
     await runInTransaction(async () => {
+      if (cascadeHistory) {
+        await dbRun('DELETE FROM order_items');
+        await dbRun('DELETE FROM orders');
+        await dbRun('DELETE FROM shifts');
+        await dbRun('DELETE FROM grn_payments');
+        await dbRun('DELETE FROM goods_received_items');
+        await dbRun('DELETE FROM goods_received_notes');
+        await dbRun('DELETE FROM purchase_order_items');
+        await dbRun('DELETE FROM purchase_orders');
+      }
       // Safely delete child batch records first to satisfy foreign keys
       await dbRun('DELETE FROM product_batches');
       await dbRun('DELETE FROM products');
+      // Mark as cleared so empty products table is not auto-reseeded on restart
+      await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES ('sample_products_seeded', 'cleared')");
     });
 
     res.json({

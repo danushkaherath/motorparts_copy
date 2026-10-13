@@ -331,17 +331,54 @@ export const api = {
     return res.json();
   },
 
-  async wipeProductCatalog(adminPin: string): Promise<{ success: boolean; message: string; deleted_count: number }> {
+  async wipeProductCatalog(adminPin: string, cascadeHistory: boolean = false): Promise<{ success: boolean; message: string; deleted_count: number }> {
     const res = await fetch(`${API_BASE}/products/wipe-catalog`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ admin_pin: adminPin }),
+      body: JSON.stringify({ admin_pin: adminPin, cascade_history: cascadeHistory }),
     });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.error || 'Failed to wipe product catalog');
     }
     // Clear offline IndexedDB products cache as well
+    try {
+      await localDb.products.clear();
+    } catch {}
+    return data;
+  },
+
+  async resetDummyData(payload: {
+    adminPin: string;
+    wipeAllProducts?: boolean;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    deleted: {
+      orders: number;
+      order_items: number;
+      shifts: number;
+      grn: number;
+      po: number;
+      batches: number;
+      products: number;
+      suppliers: number;
+      customers: number;
+    };
+    cleared_by: string;
+  }> {
+    const res = await fetch(`${API_BASE}/settings/reset-dummy-data`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        admin_pin: payload.adminPin,
+        wipe_all_products: payload.wipeAllProducts || false,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to reset dummy data');
+    }
     try {
       await localDb.products.clear();
     } catch {}
