@@ -136,11 +136,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const hasModuleAccess = (mod: string) => {
     if (!currentUser) return false;
-    // If user has customized permissions array, strictly honor it
-    if (Array.isArray(currentUser.permissions) && currentUser.permissions.length > 0) {
-      return currentUser.permissions.includes(mod);
+
+    let perms: string[] | null = null;
+    if (currentUser.permissions !== undefined && currentUser.permissions !== null) {
+      if (Array.isArray(currentUser.permissions)) {
+        perms = currentUser.permissions;
+      } else if (typeof currentUser.permissions === 'string') {
+        try {
+          const parsed = JSON.parse(currentUser.permissions);
+          if (Array.isArray(parsed)) perms = parsed;
+        } catch {}
+      }
     }
-    // Fallbacks if permissions array is not set or empty
+
+    // If explicit permissions array exists on user profile, strictly honor it!
+    if (perms !== null) {
+      return perms.includes(mod);
+    }
+
+    // Fallbacks if permissions are missing entirely from user record
     if (currentUser.role === 'admin') return true;
     if (currentUser.role === 'supervisor') {
       return ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'reports'].includes(mod);

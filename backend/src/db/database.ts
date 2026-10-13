@@ -577,7 +577,7 @@ export async function initDatabase(): Promise<void> {
     ]);
   }
 
-  // Ensure all existing users have permissions populated
+  // Ensure all existing users have permissions populated if unset
   await dbRun(`
     UPDATE users 
     SET permissions = CASE 
@@ -585,7 +585,7 @@ export async function initDatabase(): Promise<void> {
       WHEN role = 'supervisor' THEN '["pos","wholesale","catalog","inventory","grn","customers","shifts","expenses","reports"]'
       ELSE '["pos","wholesale"]'
     END
-    WHERE permissions IS NULL OR permissions = '' OR permissions = '[]' OR permissions NOT LIKE '%expenses%'
+    WHERE permissions IS NULL OR permissions = '' OR permissions = '[]'
   `);
 
   // Seed default categories for Motor Vehicle Modification Shop

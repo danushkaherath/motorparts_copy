@@ -791,6 +791,16 @@ export const api = {
     return res.json();
   },
 
+  async getMe(): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/me`, { headers: getAuthHeaders() });
+      if (!res.ok) return null;
+      return res.json();
+    } catch {
+      return null;
+    }
+  },
+
   async createUser(data: { username: string; pin: string; role: string; permissions?: string[] }): Promise<any> {
     const res = await fetch(`${API_BASE}/auth/users`, {
       method: 'POST',

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { dbAll, dbGet, dbRun } from '../db/database';
-import { generateToken, verifyAdminRequester, hashPin, verifyPin } from '../middleware/auth';
+import { generateToken, verifyAdminRequester, hashPin, verifyPin, extractTokenUser } from '../middleware/auth';
 
 export const authRouter = Router();
 
@@ -47,14 +47,15 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
       await dbRun('UPDATE users SET pin = ? WHERE id = ?', [secureHash, user.id]);
     }
 
-    let parsedPermissions: string[] = [];
-    try {
-      if (user.permissions) {
-        parsedPermissions = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions;
-      }
-    } catch {}
+    let parsedPermissions: string[] | null = null;
+    if (user.permissions !== null && user.permissions !== undefined && user.permissions !== '') {
+      try {
+        const parsed = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions;
+        if (Array.isArray(parsed)) parsedPermissions = parsed;
+      } catch {}
+    }
 
-    if (!parsedPermissions.length) {
+    if (parsedPermissions === null) {
       if (user.role === 'admin') parsedPermissions = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'procurement', 'reports', 'staff', 'settings'];
       else if (user.role === 'supervisor') parsedPermissions = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'reports'];
       else parsedPermissions = ['pos', 'wholesale'];
@@ -81,18 +82,66 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
   }
 });
 
+// Get current authenticated user profile & live permissions
+authRouter.get('/me', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const tokenUser = extractTokenUser(req);
+    const userId = tokenUser?.id || (req.headers['x-user-id'] as string);
+    const username = tokenUser?.username || (req.headers['x-username'] as string);
+
+    let user: any = null;
+    if (userId) {
+      user = await dbGet<any>('SELECT id, username, role, permissions, created_at FROM users WHERE id = ?', [userId]);
+    } else if (username) {
+      user = await dbGet<any>('SELECT id, username, role, permissions, created_at FROM users WHERE LOWER(username) = LOWER(?)', [username]);
+    }
+
+    if (!user) {
+      res.status(404).json({ error: 'User session not found' });
+      return;
+    }
+
+    let perms: string[] | null = null;
+    if (user.permissions !== null && user.permissions !== undefined && user.permissions !== '') {
+      try {
+        const parsed = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions;
+        if (Array.isArray(parsed)) perms = parsed;
+      } catch {}
+    }
+
+    if (perms === null) {
+      if (user.role === 'admin') perms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'procurement', 'reports', 'staff', 'settings'];
+      else if (user.role === 'supervisor') perms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'reports'];
+      else perms = ['pos', 'wholesale'];
+    }
+
+    res.json({
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      permissions: perms,
+      created_at: user.created_at,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // List all active staff users
 authRouter.get('/users', async (_req: Request, res: Response): Promise<void> => {
   try {
     const users = await dbAll<any>('SELECT id, username, role, permissions, created_at FROM users ORDER BY created_at ASC');
     const formatted = users.map((u) => {
-      let perms: string[] = [];
-      try {
-        if (u.permissions) perms = typeof u.permissions === 'string' ? JSON.parse(u.permissions) : u.permissions;
-      } catch {}
-      if (!perms.length) {
-        if (u.role === 'admin') perms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'procurement', 'reports', 'staff', 'settings'];
-        else if (u.role === 'supervisor') perms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'reports'];
+      let perms: string[] | null = null;
+      if (u.permissions !== null && u.permissions !== undefined && u.permissions !== '') {
+        try {
+          const parsed = typeof u.permissions === 'string' ? JSON.parse(u.permissions) : u.permissions;
+          if (Array.isArray(parsed)) perms = parsed;
+        } catch {}
+      }
+      if (perms === null) {
+        if (u.role === 'admin') perms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'procurement', 'reports', 'staff', 'settings'];
+        else if (u.role === 'supervisor') perms = ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'reports'];
         else perms = ['pos', 'wholesale'];
       }
       return {

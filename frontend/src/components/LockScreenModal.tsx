@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Unlock, AlertTriangle, User, Key, Eye, EyeOff } from 'lucide-react';
+import { Lock, Unlock, AlertTriangle, User, Key, Eye, EyeOff, Shield } from 'lucide-react';
+import { api } from '../services/api';
 
 interface LockScreenModalProps {
   isLocked: boolean;
@@ -15,6 +16,7 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [staffList, setStaffList] = useState<any[]>([]);
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
@@ -27,6 +29,14 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
         ? currentUser.username 
         : 'owner';
       setUsername(targetUser);
+
+      // Load active staff roster for quick profile selection
+      api.getUsers()
+        .then((users) => {
+          if (Array.isArray(users)) setStaffList(users);
+        })
+        .catch(() => {});
+
       setTimeout(() => {
         pinInputRef.current?.focus();
       }, 50);
@@ -105,6 +115,41 @@ export const LockScreenModal: React.FC<LockScreenModalProps> = ({ isLocked, curr
         )}
 
         <form onSubmit={handleUnlock} className="w-full space-y-4">
+          {/* Quick Staff Profile Selector */}
+          {staffList.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                Select Staff Profile
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {staffList.map((u) => {
+                  const isSelected = username.toLowerCase() === u.username.toLowerCase();
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setUsername(u.username);
+                        setPin('');
+                        setError(null);
+                        pinInputRef.current?.focus();
+                      }}
+                      className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                          : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-emerald-400'}`} />
+                      <span>{u.username}</span>
+                      <span className="text-[10px] opacity-75 font-mono">({u.role})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Typeable Username Input */}
           <div className="space-y-1">
             <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">

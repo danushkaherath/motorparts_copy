@@ -135,14 +135,21 @@ export const StaffManagement: React.FC<StaffManagementProps> = ({
         const updated = await api.updateUser(editingUser.id, payload);
 
         // If the edited user is currently logged in, sync session immediately
-        if (currentUser?.id === editingUser.id) {
+        const isCurrentActiveUser =
+          currentUser?.id === editingUser.id ||
+          (currentUser?.username && currentUser.username.toLowerCase() === editingUser?.username?.toLowerCase()) ||
+          (currentUser?.username && currentUser.username.toLowerCase() === formData.username.trim().toLowerCase());
+
+        if (isCurrentActiveUser) {
           const syncedUser = {
             ...currentUser,
+            id: updated.id || currentUser.id,
             username: updated.username,
             role: updated.role,
             permissions: updated.permissions,
           };
           localStorage.setItem('pos_user', JSON.stringify(syncedUser));
+          sessionStorage.setItem('pos_user', JSON.stringify(syncedUser));
           if (onUserUpdated) onUserUpdated(syncedUser);
         }
       } else {

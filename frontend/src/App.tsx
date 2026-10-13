@@ -95,12 +95,30 @@ export function App() {
 
   const loadSettingsAndShift = async () => {
     try {
-      const [appSettings, shift] = await Promise.all([
+      const [appSettings, shift, liveUser] = await Promise.all([
         api.getSettings(),
         api.getCurrentShift(currentUser?.id || 'usr_owner'),
+        api.getMe(),
       ]);
       setSettings(appSettings);
       setActiveShift(shift);
+      if (liveUser && liveUser.username) {
+        setCurrentUser((prev: any) => {
+          const updated = {
+            ...prev,
+            id: liveUser.id || prev?.id,
+            username: liveUser.username,
+            role: liveUser.role || prev?.role,
+            permissions: liveUser.permissions,
+          };
+          if (updated.role === 'admin' || updated.role === 'supervisor') {
+            sessionStorage.setItem('pos_user', JSON.stringify(updated));
+          } else {
+            localStorage.setItem('pos_user', JSON.stringify(updated));
+          }
+          return updated;
+        });
+      }
     } catch (err) {
       console.error('Failed to load initial app data:', err);
     }
@@ -153,11 +171,25 @@ export function App() {
 
   const hasModuleAccess = (mod: string) => {
     if (!currentUser) return false;
-    // If user has customized permissions array, strictly honor it
-    if (Array.isArray(currentUser.permissions) && currentUser.permissions.length > 0) {
-      return currentUser.permissions.includes(mod);
+
+    let perms: string[] | null = null;
+    if (currentUser.permissions !== undefined && currentUser.permissions !== null) {
+      if (Array.isArray(currentUser.permissions)) {
+        perms = currentUser.permissions;
+      } else if (typeof currentUser.permissions === 'string') {
+        try {
+          const parsed = JSON.parse(currentUser.permissions);
+          if (Array.isArray(parsed)) perms = parsed;
+        } catch {}
+      }
     }
-    // Fallbacks if permissions array is not set or empty
+
+    // If explicit permissions array exists on user profile, strictly honor it!
+    if (perms !== null) {
+      return perms.includes(mod);
+    }
+
+    // Fallbacks if permissions are missing entirely from user record
     if (currentUser.role === 'admin') return true;
     if (currentUser.role === 'supervisor') {
       return ['pos', 'wholesale', 'catalog', 'inventory', 'grn', 'customers', 'shifts', 'expenses', 'reports'].includes(mod);
@@ -341,49 +373,57 @@ export function App() {
 
       {/* Mobile Bottom Navigation Bar (Hidden on md and larger) */}
       <nav className="md:hidden flex items-center justify-around bg-[#090e18] border-t border-[#162135] py-1.5 px-2 shrink-0 z-30 select-none">
-        <button
-          type="button"
-          onClick={() => setActiveTab('pos')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
-            activeTab === 'pos' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <ShoppingCart className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">POS</span>
-        </button>
+        {hasModuleAccess('pos') && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('pos')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
+              activeTab === 'pos' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">POS</span>
+          </button>
+        )}
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('catalog')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
-            activeTab === 'catalog' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <BookOpen className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Catalog</span>
-        </button>
+        {hasModuleAccess('catalog') && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('catalog')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
+              activeTab === 'catalog' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <BookOpen className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Catalog</span>
+          </button>
+        )}
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('inventory')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
-            activeTab === 'inventory' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Package className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Stock</span>
-        </button>
+        {hasModuleAccess('inventory') && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('inventory')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
+              activeTab === 'inventory' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Package className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Stock</span>
+          </button>
+        )}
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('reports')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
-            activeTab === 'reports' ? 'text-teal-400 font-bold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <BarChart3 className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Reports</span>
-        </button>
+        {hasModuleAccess('reports') && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('reports')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${
+              activeTab === 'reports' ? 'text-teal-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <BarChart3 className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Reports</span>
+          </button>
+        )}
 
         <button
           type="button"
