@@ -508,17 +508,35 @@ export const ModularSettings: React.FC<ModularSettingsProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Store Name
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.store_name || ''}
-                onChange={(e) => setFormData({ ...formData, store_name: e.target.value })}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-xs text-white outline-hidden focus:border-blue-400 font-medium"
-              />
+            <div className="md:col-span-2 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Store Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.store_name || ''}
+                  onChange={(e) => setFormData({ ...formData, store_name: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-xs text-white outline-hidden focus:border-blue-400 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Sub Store Name (Branch, Department or Tagline)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Spare Parts Division / Colombo Branch"
+                  value={formData.sub_store_name || ''}
+                  onChange={(e) => setFormData({ ...formData, sub_store_name: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-xs text-white outline-hidden focus:border-blue-400 font-medium"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Prints directly underneath Store Name on receipts in the same font size without bold.
+                </p>
+              </div>
             </div>
 
             <div>

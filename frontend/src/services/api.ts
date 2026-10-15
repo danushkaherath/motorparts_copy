@@ -523,6 +523,7 @@ export const api = {
 
       // Store settings for receipt
       const storeName = activeSettings.store_name || 'THUSHAN';
+      const subStoreName = activeSettings.sub_store_name || '';
       const storeAddress = activeSettings.store_address || '';
       const storePhone = activeSettings.store_phone || '';
       const receiptFooter = activeSettings.store_receipt_footer || 'Thank you for shopping with us! (Offline Receipt)';
@@ -562,6 +563,7 @@ export const api = {
         },
         receipt_config: {
           store_name: storeName,
+          sub_store_name: subStoreName,
           store_address: storeAddress,
           store_phone: storePhone,
           receipt_footer: receiptFooter,

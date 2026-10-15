@@ -123,6 +123,7 @@ export interface AppSettings {
   feature_discounts: string;
   tax_rate: string;
   store_name: string;
+  sub_store_name?: string;
   store_address: string;
   store_phone: string;
   store_receipt_footer: string;

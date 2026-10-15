@@ -304,6 +304,7 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
 
     // Fetch store info for receipt (read-only, outside transaction)
     const storeName = (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_name']))?.value || 'Grocery POS';
+    const subStoreName = (await dbGet('SELECT value FROM settings WHERE key = ?', ['sub_store_name']))?.value || '';
     const storeAddress = (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_address']))?.value || '';
     const storePhone = (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_phone']))?.value || '';
     const receiptFooter = (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_receipt_footer']))?.value || '';
@@ -339,6 +340,7 @@ salesRouter.post('/checkout', async (req: Request, res: Response): Promise<void>
       },
       receipt_config: {
         store_name: storeName,
+        sub_store_name: subStoreName,
         store_address: storeAddress,
         store_phone: storePhone,
         receipt_footer: receiptFooter,
@@ -557,6 +559,7 @@ salesRouter.get('/:orderId/receipt', async (req: Request, res: Response): Promis
 
     const items = await dbAll('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
     const storeName = (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_name']))?.value || 'Grocery POS';
+    const subStoreName = (await dbGet('SELECT value FROM settings WHERE key = ?', ['sub_store_name']))?.value || '';
     const storeAddress = (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_address']))?.value || '';
     const storePhone = (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_phone']))?.value || '';
     const receiptFooter = (await dbGet('SELECT value FROM settings WHERE key = ?', ['store_receipt_footer']))?.value || '';
@@ -570,6 +573,7 @@ salesRouter.get('/:orderId/receipt', async (req: Request, res: Response): Promis
       },
       receipt_config: {
         store_name: storeName,
+        sub_store_name: subStoreName,
         store_address: storeAddress,
         store_phone: storePhone,
         receipt_footer: receiptFooter,

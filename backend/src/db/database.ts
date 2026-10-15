@@ -510,6 +510,7 @@ export async function initDatabase(): Promise<void> {
     feature_discounts: 'true',
     tax_rate: '5.0',
     store_name: 'MotorParts & Tuning Studio (LKR)',
+    sub_store_name: '',
     store_address: '420 Speed Avenue, Colombo 05, Sri Lanka',
     store_phone: '+94 11 234 5678',
     store_receipt_footer: 'Thank you for choosing MotorParts & Tuning Studio! Professional installation & track support.',

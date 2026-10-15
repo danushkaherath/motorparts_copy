@@ -393,6 +393,7 @@ if ($Action -eq "print") {
 
         # Fonts matching the screen
         $fontTitle = New-Object System.Drawing.Font("Nirmala UI", 11, [System.Drawing.FontStyle]::Bold)
+        $fontTitleRegular = New-Object System.Drawing.Font("Nirmala UI", 11, [System.Drawing.FontStyle]::Regular)
         $fontBold = New-Object System.Drawing.Font("Nirmala UI", 8.5, [System.Drawing.FontStyle]::Bold)
         $fontRegular = New-Object System.Drawing.Font("Nirmala UI", 8.5, [System.Drawing.FontStyle]::Regular)
         $fontSmall = New-Object System.Drawing.Font("Nirmala UI", 7.5, [System.Drawing.FontStyle]::Regular)
@@ -417,6 +418,12 @@ if ($Action -eq "print") {
         $storeName = if ($settings.store_name) { $settings.store_name.ToUpper() } else { "GROCERY STORE POS" }
         $g.DrawString($storeName, $fontTitle, $brush, (New-Object System.Drawing.RectangleF(0, $y, $printableWidth, 20)), $centerFormat)
         $y += 20
+
+        if ($settings.sub_store_name) {
+            $subStoreName = $settings.sub_store_name.ToUpper()
+            $g.DrawString($subStoreName, $fontTitleRegular, $brush, (New-Object System.Drawing.RectangleF(0, $y, $printableWidth, 20)), $centerFormat)
+            $y += 18
+        }
 
         if ($settings.store_address) {
             $g.DrawString($settings.store_address, $fontSmall, $brush, (New-Object System.Drawing.RectangleF(0, $y, $printableWidth, 15)), $centerFormat)

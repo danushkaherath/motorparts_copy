@@ -451,9 +451,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-inner">
               <ShoppingBag className="w-4 h-4" />
             </div>
-            <span className="truncate text-base font-extrabold tracking-tight text-white">
-              {settings?.store_name || 'MotorParts POS'}
-            </span>
+            <div className="min-w-0">
+              <span className="truncate block text-base font-extrabold tracking-tight text-white leading-tight">
+                {settings?.store_name || 'MotorParts POS'}
+              </span>
+              {settings?.sub_store_name && (
+                <span className="truncate block text-xs font-normal text-slate-400 leading-tight mt-0.5">
+                  {settings.sub_store_name}
+                </span>
+              )}
+            </div>
           </div>
           <button
             onClick={onCloseMobile}
@@ -506,9 +513,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <ShoppingBag className="w-5 h-5" />
               </div>
               {!isCollapsed && (
-                <span className="truncate text-base font-extrabold tracking-tight text-white">
-                  {settings?.store_name || 'MotorParts POS'}
-                </span>
+                <div className="min-w-0">
+                  <span className="truncate block text-sm font-extrabold tracking-tight text-white leading-tight">
+                    {settings?.store_name || 'MotorParts POS'}
+                  </span>
+                  {settings?.sub_store_name && (
+                    <span className="truncate block text-xs font-normal text-slate-400 leading-tight mt-0.5">
+                      {settings.sub_store_name}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 

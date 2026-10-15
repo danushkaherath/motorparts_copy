@@ -274,6 +274,11 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
               <h2 className="font-semibold text-sm uppercase tracking-wider text-gray-900">
                 {settings?.store_name || 'GROCERY STORE POS'}
               </h2>
+              {settings?.sub_store_name && (
+                <div className="font-normal text-sm uppercase tracking-wider text-gray-900 mt-0.5">
+                  {settings.sub_store_name}
+                </div>
+              )}
               {settings?.store_address && (
                 <p className="text-[10px] font-light text-gray-600 mt-0.5">{settings.store_address}</p>
               )}
