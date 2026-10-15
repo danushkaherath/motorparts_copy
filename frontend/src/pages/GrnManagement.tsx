@@ -118,15 +118,25 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
   // Quick Product Registration Modal
   const [isQuickProductOpen, setIsQuickProductOpen] = useState<boolean>(false);
   const [categories, setCategories] = useState<any[]>([]);
-  const [quickProductForm, setQuickProductForm] = useState({
+  const [quickProductForm, setQuickProductForm] = useState<{
+    barcode: string;
+    sku: string;
+    name: string;
+    brand: string;
+    category_id: string;
+    cost_price: string | number;
+    selling_price: string | number;
+    mrp: string | number;
+    unit: string;
+  }>({
     barcode: '',
     sku: '',
     name: '',
     brand: '',
     category_id: '',
-    cost_price: 0,
-    selling_price: 0,
-    mrp: 0,
+    cost_price: '',
+    selling_price: '',
+    mrp: '',
     unit: 'pcs',
   });
 
@@ -504,9 +514,9 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
       name: isBarcode ? '' : initialBarcode.trim(),
       brand: '',
       category_id: categories[0]?.id || '',
-      cost_price: 0,
-      selling_price: 0,
-      mrp: 0,
+      cost_price: '',
+      selling_price: '',
+      mrp: '',
       unit: 'pcs',
     });
     setIsQuickProductOpen(true);
@@ -519,8 +529,15 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
       return;
     }
     try {
+      const numCost = Number(quickProductForm.cost_price) || 0;
+      const numSelling = Number(quickProductForm.selling_price) || 0;
+      const numMrp = Number(quickProductForm.mrp) || numSelling || 0;
+
       const created = await api.saveProduct({
         ...quickProductForm,
+        cost_price: numCost,
+        selling_price: numSelling,
+        mrp: numMrp,
         is_in_inventory: 0,
         stock_quantity: 0,
       });
@@ -1384,6 +1401,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                                 step="any"
                                 min="0.01"
                                 value={item.quantity_received}
+                                onFocus={(e) => e.target.select()}
                                 onChange={(e) => updateDraftItem(idx, 'quantity_received', e.target.value)}
                                 required
                                 className="w-20 text-right bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-teal-400 focus:border-teal-500 outline-hidden font-mono"
@@ -1397,6 +1415,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                                 step="0.01"
                                 min="0"
                                 value={item.cost_price}
+                                onFocus={(e) => e.target.select()}
                                 onChange={(e) => updateDraftItem(idx, 'cost_price', e.target.value)}
                                 required
                                 className="w-20 text-right bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-white focus:border-teal-500 outline-hidden"
@@ -1410,6 +1429,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                                 step="0.01"
                                 min="0"
                                 value={item.selling_price}
+                                onFocus={(e) => e.target.select()}
                                 onChange={(e) => updateDraftItem(idx, 'selling_price', e.target.value)}
                                 required
                                 className="w-20 text-right bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-emerald-400 focus:border-teal-500 outline-hidden"
@@ -1423,6 +1443,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                                 step="0.01"
                                 min="0"
                                 value={item.mrp}
+                                onFocus={(e) => e.target.select()}
                                 onChange={(e) => updateDraftItem(idx, 'mrp', e.target.value)}
                                 className="w-20 text-right bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-amber-300 focus:border-teal-500 outline-hidden"
                               />
@@ -2166,9 +2187,11 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                     type="number"
                     step="0.01"
                     min="0"
+                    placeholder="0.00"
                     value={quickProductForm.cost_price}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) =>
-                      setQuickProductForm({ ...quickProductForm, cost_price: parseFloat(e.target.value) || 0 })
+                      setQuickProductForm({ ...quickProductForm, cost_price: e.target.value })
                     }
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden font-mono"
                   />
@@ -2180,14 +2203,17 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                     type="number"
                     step="0.01"
                     min="0"
+                    placeholder="0.00"
                     value={quickProductForm.selling_price}
-                    onChange={(e) =>
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value;
                       setQuickProductForm({
                         ...quickProductForm,
-                        selling_price: parseFloat(e.target.value) || 0,
-                        mrp: quickProductForm.mrp || parseFloat(e.target.value) || 0,
-                      })
-                    }
+                        selling_price: val,
+                        mrp: quickProductForm.mrp === '' || quickProductForm.mrp === quickProductForm.selling_price ? val : quickProductForm.mrp,
+                      });
+                    }}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden font-mono"
                   />
                 </div>
@@ -2198,9 +2224,11 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                     type="number"
                     step="0.01"
                     min="0"
+                    placeholder="0.00"
                     value={quickProductForm.mrp}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) =>
-                      setQuickProductForm({ ...quickProductForm, mrp: parseFloat(e.target.value) || 0 })
+                      setQuickProductForm({ ...quickProductForm, mrp: e.target.value })
                     }
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden font-mono"
                   />

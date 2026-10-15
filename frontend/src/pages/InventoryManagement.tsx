@@ -782,6 +782,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
                       step="any"
                       min="0"
                       value={adjustData.cost_price}
+                      onFocus={(e) => e.target.select()}
                       onChange={(e) => setAdjustData({ ...adjustData, cost_price: parseFloat(e.target.value) || 0 })}
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 px-2 text-white font-mono text-xs outline-hidden focus:border-amber-400"
                     />
@@ -794,6 +795,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
                       min="0"
                       required
                       value={adjustData.selling_price}
+                      onFocus={(e) => e.target.select()}
                       onChange={(e) => setAdjustData({ ...adjustData, selling_price: parseFloat(e.target.value) || 0 })}
                       className="w-full bg-slate-900 border border-emerald-600/70 rounded-lg py-1.5 px-2 text-emerald-300 font-mono text-xs font-bold outline-hidden focus:border-emerald-400"
                     />
@@ -805,6 +807,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
                       step="any"
                       min="0"
                       value={adjustData.mrp}
+                      onFocus={(e) => e.target.select()}
                       onChange={(e) => setAdjustData({ ...adjustData, mrp: parseFloat(e.target.value) || 0 })}
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 px-2 text-white font-mono text-xs outline-hidden focus:border-amber-400"
                     />
@@ -991,6 +994,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
                         step="any"
                         min="0"
                         value={catalogStockForm.cost_price}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) => setCatalogStockForm({ ...catalogStockForm, cost_price: parseFloat(e.target.value) || 0 })}
                         className="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 px-2 text-white font-mono text-xs outline-hidden focus:border-amber-400"
                       />
@@ -1003,6 +1007,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
                         min="0"
                         required
                         value={catalogStockForm.selling_price}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) => setCatalogStockForm({ ...catalogStockForm, selling_price: parseFloat(e.target.value) || 0 })}
                         className="w-full bg-slate-900 border border-emerald-600/70 rounded-lg py-1.5 px-2 text-emerald-300 font-mono text-xs font-bold outline-hidden focus:border-emerald-400"
                       />
@@ -1014,6 +1019,7 @@ export const InventoryManagement: React.FC<InventoryProps> = ({ settings, curren
                         step="any"
                         min="0"
                         value={catalogStockForm.mrp}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) => setCatalogStockForm({ ...catalogStockForm, mrp: parseFloat(e.target.value) || 0 })}
                         className="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 px-2 text-white font-mono text-xs outline-hidden focus:border-amber-400"
                       />
