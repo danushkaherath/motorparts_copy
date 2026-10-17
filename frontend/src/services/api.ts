@@ -202,6 +202,29 @@ export const api = {
     }
   },
 
+  async getNextBarcode(): Promise<string> {
+    try {
+      const res = await fetch(`${API_BASE}/products/next-barcode`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.next_barcode) return String(data.next_barcode);
+      }
+    } catch {}
+
+    // Fallback: Calculate from local Dexie offline DB
+    try {
+      const products = await localDb.products.toArray();
+      const existing = new Set(products.map((p) => p.barcode?.trim()));
+      let candidate = 1000030;
+      while (existing.has(String(candidate))) {
+        candidate++;
+      }
+      return String(candidate);
+    } catch {
+      return '1000030';
+    }
+  },
+
   async bulkUploadProducts(items: any[], target: 'catalog' | 'inventory' = 'catalog'): Promise<any> {
     const res = await fetch(`${API_BASE}/products/bulk-upload`, {
       method: 'POST',

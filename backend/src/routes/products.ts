@@ -18,6 +18,26 @@ productsRouter.get('/sample-csv', (_req: Request, res: Response): void => {
   }
 });
 
+// Suggest next available incremental GTIN / Barcode starting from 1000030
+productsRouter.get('/next-barcode', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const rows = await dbAll<{ barcode: string }>('SELECT barcode FROM products');
+    const existing = new Set<string>();
+    for (const r of rows) {
+      if (r.barcode) existing.add(r.barcode.trim());
+    }
+
+    let candidate = 1000030;
+    while (existing.has(String(candidate))) {
+      candidate++;
+    }
+
+    res.json({ next_barcode: String(candidate) });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Fast barcode and product lookup for cashier terminal
 productsRouter.get('/barcode/:code', async (req: Request, res: Response): Promise<void> => {
   try {

@@ -118,6 +118,7 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
   // Quick Product Registration Modal
   const [isQuickProductOpen, setIsQuickProductOpen] = useState<boolean>(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [suggestedBarcode, setSuggestedBarcode] = useState<string>('1000030');
   const [quickProductForm, setQuickProductForm] = useState<{
     barcode: string;
     sku: string;
@@ -506,11 +507,24 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
   };
 
   // Quick Product Registration Handler
-  const handleOpenQuickProduct = (initialBarcode: string = '') => {
+  const handleOpenQuickProduct = async (initialBarcode: string = '') => {
     const isBarcode = /^\d+$/.test(initialBarcode.trim());
+
+    // Fetch next incremental barcode starting from 1000030
+    let nextCode = '1000030';
+    try {
+      nextCode = await api.getNextBarcode();
+    } catch {
+      nextCode = '1000030';
+    }
+    setSuggestedBarcode(nextCode);
+
+    // If an initial numeric barcode was provided (e.g. from search), use it; otherwise pre-fill with suggestedCode!
+    const effectiveBarcode = isBarcode && initialBarcode.trim() ? initialBarcode.trim() : nextCode;
+
     setQuickProductForm({
-      barcode: isBarcode ? initialBarcode.trim() : '',
-      sku: isBarcode ? initialBarcode.trim() : '',
+      barcode: effectiveBarcode,
+      sku: effectiveBarcode,
       name: isBarcode ? '' : initialBarcode.trim(),
       brand: '',
       category_id: categories[0]?.id || '',
@@ -547,6 +561,9 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
         type: 'success',
         message: `Registered "${created.name}" and added to delivery list!`,
       });
+
+      // Refresh next barcode suggestion in background
+      api.getNextBarcode().then(setSuggestedBarcode).catch(() => {});
     } catch (err: any) {
       alert(`Failed to save product: ${err.message}`);
     }
@@ -2106,23 +2123,46 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
             <form onSubmit={handleSaveQuickProduct} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">
-                    GTIN / Barcode <span className="text-rose-400">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-400">
+                      GTIN / Barcode <span className="text-rose-400">*</span>
+                    </label>
+                    {suggestedBarcode && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setQuickProductForm((prev) => ({
+                            ...prev,
+                            barcode: suggestedBarcode,
+                            sku: prev.sku === prev.barcode || !prev.sku ? suggestedBarcode : prev.sku,
+                          }))
+                        }
+                        className="text-[10.5px] text-teal-400 hover:text-teal-300 font-mono flex items-center gap-1 cursor-pointer transition"
+                        title="Click to apply suggested incremental GTIN / Barcode"
+                      >
+                        <Sparkles className="w-3 h-3 text-teal-400" />
+                        <span>Suggested: <strong className="text-white underline">{suggestedBarcode}</strong></span>
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     required
                     value={quickProductForm.barcode}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) =>
                       setQuickProductForm({
                         ...quickProductForm,
                         barcode: e.target.value,
-                        sku: quickProductForm.sku || e.target.value,
+                        sku: quickProductForm.sku === quickProductForm.barcode ? e.target.value : (quickProductForm.sku || e.target.value),
                       })
                     }
-                    placeholder="e.g. 4796000300092"
+                    placeholder={`e.g. ${suggestedBarcode || '1000030'}`}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden font-mono"
                   />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Sequential GTIN/Barcode (starts at 1000030). Fully editable.
+                  </p>
                 </div>
 
                 <div>
@@ -2130,10 +2170,14 @@ export const GrnManagement: React.FC<GrnManagementProps> = ({ settings, currentU
                   <input
                     type="text"
                     value={quickProductForm.sku}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => setQuickProductForm({ ...quickProductForm, sku: e.target.value })}
                     placeholder="Auto or SKU"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-hidden font-mono"
                   />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Internal part number / SKU code.
+                  </p>
                 </div>
               </div>
 

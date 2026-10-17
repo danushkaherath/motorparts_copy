@@ -13,7 +13,8 @@ import {
   X,
   Layers,
   Barcode,
-  Tag
+  Tag,
+  Sparkles
 } from 'lucide-react';
 import type { Product, AppSettings } from '../types';
 import { api } from '../services/api';
@@ -49,6 +50,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
   const [newCatName, setNewCatName] = useState<string>('');
   const [newCatColor, setNewCatColor] = useState<string>('#3b82f6');
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
+  const [suggestedBarcode, setSuggestedBarcode] = useState<string>('1000030');
   const [isBatchModalOpen, setIsBatchModalOpen] = useState<boolean>(false);
   const [batchModalProduct, setBatchModalProduct] = useState<Product | null>(null);
 
@@ -111,10 +113,18 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
     }
   };
 
-  const handleOpenAdd = () => {
+  const handleOpenAdd = async () => {
+    let nextCode = '1000030';
+    try {
+      nextCode = await api.getNextBarcode();
+    } catch {
+      nextCode = '1000030';
+    }
+    setSuggestedBarcode(nextCode);
+
     setEditingProduct({
-      barcode: '',
-      sku: '',
+      barcode: nextCode,
+      sku: nextCode,
       name: '',
       brand: '',
       category_id: categories[0]?.id || '',
@@ -652,15 +662,48 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ settings, curren
             <form onSubmit={handleSaveProduct} className="mt-4 space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Barcode *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-slate-300 font-semibold">Barcode *</label>
+                    {suggestedBarcode && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingProduct((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  barcode: suggestedBarcode,
+                                  sku: prev.sku === prev.barcode || !prev.sku ? suggestedBarcode : prev.sku,
+                                }
+                              : prev
+                          )
+                        }
+                        className="text-[10px] text-blue-400 hover:text-blue-300 font-mono flex items-center gap-1 cursor-pointer transition"
+                        title="Click to apply suggested incremental GTIN / Barcode"
+                      >
+                        <Sparkles className="w-3 h-3 text-blue-400" />
+                        <span>Suggested: <strong>{suggestedBarcode}</strong></span>
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     required
                     value={editingProduct.barcode || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, barcode: e.target.value })}
-                    placeholder="e.g. 4791025..."
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        barcode: e.target.value,
+                        sku: editingProduct.sku === editingProduct.barcode ? e.target.value : (editingProduct.sku || e.target.value),
+                      })
+                    }
+                    placeholder={`e.g. ${suggestedBarcode || '1000030'}`}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-white font-mono outline-hidden focus:border-blue-400"
                   />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Sequential GTIN/Barcode (starts at 1000030). Fully editable.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-slate-300 font-semibold mb-1">SKU</label>
